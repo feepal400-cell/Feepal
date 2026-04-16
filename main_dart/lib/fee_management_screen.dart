@@ -204,7 +204,7 @@ class FeeManagementScreen extends StatelessWidget {
                           Translations.get('Select Class', isUrdu),
                           style: const TextStyle(color: Colors.black38),
                         ),
-                        value: selectedClass,
+                        initialValue: selectedClass,
                         icon: const Icon(Icons.keyboard_arrow_down),
                         items:
                             List.generate(
@@ -319,7 +319,7 @@ class FeeManagementScreen extends StatelessWidget {
                                 allowInstallments = value;
                               });
                             },
-                            activeColor: const Color(
+                            activeThumbColor: const Color(
                               0xFF2168F8,
                             ), // Blue thumb when active
                             activeTrackColor: const Color(0xFF2168F8)

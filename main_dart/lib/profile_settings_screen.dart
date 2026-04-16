@@ -57,7 +57,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
             ),
           ),
-          if (trailing != null) trailing,
+          ?trailing,
         ],
       ),
     );
@@ -246,7 +246,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                                       isNotificationEnabled = value;
                                     });
                                   },
-                                  activeColor: Colors.white,
+                                  activeThumbColor: Colors.white,
                                   activeTrackColor: const Color(0xFF2168F8),
                                   inactiveThumbColor: Colors.white,
                                   inactiveTrackColor: const Color(0xFFD3D3D3),
