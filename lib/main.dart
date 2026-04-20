@@ -12,7 +12,9 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    print("✅ FeePal Firebase: Connected Successfully");
+    debugPrint("✅ FeePal Firebase: Connected Successfully");
+    debugPrint("📍 Project ID: ${DefaultFirebaseOptions.currentPlatform.projectId}");
+    debugPrint("📍 API Key: ${DefaultFirebaseOptions.currentPlatform.apiKey}");
   } catch (e) {
     print("❌ FeePal Firebase: Initialization Error: $e");
   }
@@ -29,7 +31,25 @@ class FeePalApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'FeePal',
       theme: ThemeData(
+        useMaterial3: true,
         scaffoldBackgroundColor: Colors.white,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF2168F8),
+          surface: Colors.white,
+          surfaceTint: Colors.transparent,
+        ),
+        dialogTheme: const DialogThemeData(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+        ),
+        bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+        ),
+        cardTheme: const CardThemeData(
+          color: Colors.white,
+          surfaceTintColor: Colors.transparent,
+        ),
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
         hoverColor: Colors.transparent,

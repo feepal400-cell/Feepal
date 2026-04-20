@@ -8,6 +8,7 @@ import 'settings_change_password_screen.dart';
 import 'user_login_screen.dart';
 import 'navigation_helper.dart';
 import 'bank_details_screen.dart';
+import 'services/firebase_service.dart';
 
 class ProfileSettingsScreen extends StatefulWidget {
   const ProfileSettingsScreen({super.key});
@@ -17,7 +18,36 @@ class ProfileSettingsScreen extends StatefulWidget {
 }
 
 class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
+  final FirebaseService _firebaseService = FirebaseService();
   bool isNotificationEnabled = true;
+  bool _isLoading = true;
+  String _schoolName = '';
+  String _adminName = '';
+  String _email = '';
+  String _phone = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    final data = await _firebaseService.getAdminProfile();
+    if (mounted && data != null) {
+      setState(() {
+        _schoolName = data['schoolName'] ?? 'School Name';
+        _adminName = data['adminName'] ?? 'Admin Name';
+        _email = data['email'] ?? 'No Email';
+        _phone = data['phoneNumber'] ?? 'No Phone';
+        _isLoading = false;
+      });
+    } else if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   Widget _buildInfoRow(
     IconData icon,
@@ -80,11 +110,11 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
-                ),
               ),
             ),
-            ?trailing,
-          ],
+          ),
+          if (trailing != null) trailing,
+        ],
         ),
       ),
     );
@@ -186,11 +216,11 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'SIT ISLAMIC SCHOOL',
-                                      style: TextStyle(
+                                    Text(
+                                      _isLoading ? 'Loading...' : _schoolName.toUpperCase(),
+                                      style: const TextStyle(
                                         fontSize: 16,
-                                        fontWeight: FontWeight.w500,
+                                        fontWeight: FontWeight.w700,
                                         color: Colors.black87,
                                       ),
                                     ),
@@ -243,31 +273,36 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                               ),
                             ],
                           ),
-                          child: Column(
+                          child: _isLoading 
+                            ? const Center(child: Padding(
+                                padding: EdgeInsets.all(20.0),
+                                child: CircularProgressIndicator(color: Color(0xFF2168F8)),
+                              ))
+                            : Column(
                             children: [
                               _buildInfoRow(
                                 Icons.account_balance,
                                 const Color(0xFF2168F8),
                                 'School Name',
-                                'SIT ISLAMIC SCHOOL',
+                                _schoolName,
                               ),
                               _buildInfoRow(
                                 Icons.person_outline,
                                 const Color(0xFF2168F8),
                                 'Admin Name',
-                                'Zoraiz Mustafa',
+                                _adminName,
                               ),
                               _buildInfoRow(
                                 Icons.email_outlined,
                                 const Color(0xFF2168F8),
                                 'Email',
-                                'Admin@SIT_islamic.edu',
+                                _email,
                               ),
                               _buildInfoRow(
                                 Icons.phone_outlined,
                                 const Color(0xFF2168F8),
                                 'Phone',
-                                '+92 300 1234567',
+                                _phone,
                               ),
                               const Divider(height: 1, color: Colors.black12),
                               _buildSettingRow(

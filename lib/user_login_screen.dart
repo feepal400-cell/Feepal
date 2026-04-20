@@ -5,6 +5,7 @@ import 'forgot_password_screen.dart';
 import 'admin_dashboard_screen.dart';
 import 'parent_dashboard_screen.dart';
 import 'navigation_helper.dart';
+import 'package:main_dart/services/firebase_service.dart';
 
 class UserLoginScreen extends StatefulWidget {
   const UserLoginScreen({super.key});
@@ -14,7 +15,76 @@ class UserLoginScreen extends StatefulWidget {
 }
 
 class _UserLoginScreenState extends State<UserLoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FirebaseService _firebaseService = FirebaseService();
   bool isParentSelected = false;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin(bool isUrdu) async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            Translations.get('Please fill in all required fields.', isUrdu),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(Translations.get('Invalid email format.', isUrdu)),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final error = await _firebaseService.login(
+      email: email,
+      password: password,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (error == null) {
+      navigateWithLoader(context, () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => isParentSelected
+                ? const ParentDashboardScreen()
+                : const AdminDashboardScreen(),
+          ),
+        );
+      });
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
+    }
+  }
 
   Color get _primaryAccentColor =>
       isParentSelected ? const Color(0xFF00D4FF) : const Color(0xFF2168F8);
@@ -31,10 +101,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
               width: double.infinity,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF2168F8),
-                    Color(0xFF00D4FF),
-                  ],
+                  colors: [Color(0xFF2168F8), Color(0xFF00D4FF)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -58,7 +125,10 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                               borderRadius: BorderRadius.circular(15),
                             ),
                             child: IconButton(
-                              icon: const Icon(Icons.arrow_back, color: Colors.white),
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                              ),
                               onPressed: () => Navigator.pop(context),
                             ),
                           ),
@@ -136,11 +206,15 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                               color: !isParentSelected
                                                   ? _primaryAccentColor
                                                   : Colors.transparent,
-                                              borderRadius: BorderRadius.circular(15),
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
                                             ),
                                             child: Center(
                                               child: Text(
-                                                Translations.get('Admin', isUrdu),
+                                                Translations.get(
+                                                  'Admin',
+                                                  isUrdu,
+                                                ),
                                                 style: TextStyle(
                                                   color: !isParentSelected
                                                       ? Colors.white
@@ -156,19 +230,24 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: GestureDetector(
-                                          onTap: () =>
-                                              setState(() => isParentSelected = true),
+                                          onTap: () => setState(
+                                            () => isParentSelected = true,
+                                          ),
                                           child: Container(
                                             height: 50,
                                             decoration: BoxDecoration(
                                               color: isParentSelected
                                                   ? _primaryAccentColor
                                                   : Colors.transparent,
-                                              borderRadius: BorderRadius.circular(15),
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
                                             ),
                                             child: Center(
                                               child: Text(
-                                                Translations.get('Parent', isUrdu),
+                                                Translations.get(
+                                                  'Parent',
+                                                  isUrdu,
+                                                ),
                                                 style: TextStyle(
                                                   color: isParentSelected
                                                       ? Colors.white
@@ -196,8 +275,12 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   TextField(
+                                    controller: _emailController,
                                     decoration: InputDecoration(
-                                      hintText: Translations.get('Enter email or phone', isUrdu),
+                                      hintText: Translations.get(
+                                        'Enter email or phone',
+                                        isUrdu,
+                                      ),
                                       hintStyle: const TextStyle(
                                         color: Colors.black38,
                                         fontSize: 14,
@@ -206,10 +289,11 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                         Icons.person_outline,
                                         color: Colors.black54,
                                       ),
-                                      contentPadding: const EdgeInsets.symmetric(
-                                        vertical: 0,
-                                        horizontal: 15,
-                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 0,
+                                            horizontal: 15,
+                                          ),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(15),
                                         borderSide: const BorderSide(
@@ -238,6 +322,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   TextField(
+                                    controller: _passwordController,
                                     obscureText: true,
                                     decoration: InputDecoration(
                                       hintText: '********',
@@ -249,10 +334,11 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                         Icons.lock_outline,
                                         color: Colors.black54,
                                       ),
-                                      contentPadding: const EdgeInsets.symmetric(
-                                        vertical: 0,
-                                        horizontal: 15,
-                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 0,
+                                            horizontal: 15,
+                                          ),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(15),
                                         borderSide: const BorderSide(
@@ -272,20 +358,26 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
 
                                   // Forgot Password
                                   Align(
-                                    alignment: isUrdu ? Alignment.centerLeft : Alignment.centerRight,
+                                    alignment: isUrdu
+                                        ? Alignment.centerLeft
+                                        : Alignment.centerRight,
                                     child: GestureDetector(
                                       onTap: () {
                                         navigateWithLoader(context, () {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => const ForgotPasswordScreen(),
+                                              builder: (context) =>
+                                                  const ForgotPasswordScreen(),
                                             ),
                                           );
                                         });
                                       },
                                       child: Text(
-                                        Translations.get('Forgot Password?', isUrdu),
+                                        Translations.get(
+                                          'Forgot Password?',
+                                          isUrdu,
+                                        ),
                                         style: TextStyle(
                                           color: Colors.blue[600],
                                           fontSize: 14,
@@ -302,42 +394,35 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                     width: double.infinity,
                                     height: 55,
                                     child: ElevatedButton(
-                                      onPressed: () {
-                                        if (!isParentSelected) {
-                                          navigateWithLoader(context, () {
-                                            Navigator.pushReplacement(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => const AdminDashboardScreen(),
-                                              ),
-                                            );
-                                          });
-                                        } else {
-                                          navigateWithLoader(context, () {
-                                            Navigator.pushReplacement(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => const ParentDashboardScreen(),
-                                              ),
-                                            );
-                                          });
-                                        }
-                                      },
+                                      onPressed: _isLoading
+                                          ? null
+                                          : () => _handleLogin(isUrdu),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: _primaryAccentColor,
                                         foregroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(15),
+                                          borderRadius: BorderRadius.circular(
+                                            15,
+                                          ),
                                         ),
                                         elevation: 0,
                                       ),
-                                      child: Text(
-                                        Translations.get('Login', isUrdu),
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                                      child: _isLoading
+                                          ? const SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : Text(
+                                              Translations.get('Login', isUrdu),
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
                                     ),
                                   ),
 
@@ -348,7 +433,10 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
-                                        Translations.get("Don't have an account? ", isUrdu),
+                                        Translations.get(
+                                          "Don't have an account? ",
+                                          isUrdu,
+                                        ),
                                         style: const TextStyle(
                                           color: Colors.black87,
                                           fontSize: 14,
@@ -399,7 +487,9 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                             languageNotifier.toggle();
                           },
                           style: TextButton.styleFrom(
-                            backgroundColor: Colors.white.withValues(alpha: 0.2),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.2,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
