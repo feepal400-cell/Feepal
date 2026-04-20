@@ -274,6 +274,7 @@ class _ParentAlertsScreenState extends State<ParentAlertsScreen> {
               children: [
                 // Cyan Rounded Header
                 Container(
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF00D4FF), Color(0xFF009BCB)],
@@ -297,37 +298,13 @@ class _ParentAlertsScreenState extends State<ParentAlertsScreen> {
                     bottom: false,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            height: 40,
-                            width: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF00BBD4),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ),
-                          const SizedBox(width: 15),
-                          Text(
-                            Translations.get('Notifications', isUrdu),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        Translations.get('Notifications', isUrdu),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

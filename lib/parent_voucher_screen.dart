@@ -72,6 +72,7 @@ class _ParentVoucherScreenState extends State<ParentVoucherScreen> {
                       children: [
                         // Header and Summary Card (Wrapping)
                         Container(
+                          width: double.infinity,
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
                               colors: [Color(0xFF00D4FF), Color(0xFF009BCB)],
@@ -86,34 +87,18 @@ class _ParentVoucherScreenState extends State<ParentVoucherScreen> {
                           child: SafeArea(
                             bottom: false,
                             child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Header Row
                                 Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        height: 40,
-                                        width: 40,
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: IconButton(
-                                          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-                                          onPressed: () => Navigator.pop(context),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 15),
-                                      Text(
-                                        Translations.get('Generate Voucher', isUrdu),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    Translations.get('Generate Voucher', isUrdu),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                                 
