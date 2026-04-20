@@ -151,7 +151,7 @@ class _FeeManagementScreenState extends State<FeeManagementScreen> {
     DateTime? selectedDate = feeData?['dueDateRaw'] != null ? (feeData!['dueDateRaw'] as Timestamp).toDate() : null;
     
     if (isEditing) {
-      _amountController.text = feeData!['amount'] ?? '';
+      _amountController.text = feeData['amount'] ?? '';
     } else {
       _amountController.clear();
     }
@@ -206,7 +206,7 @@ class _FeeManagementScreenState extends State<FeeManagementScreen> {
                           labelText: Translations.get('Class', isUrdu),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        value: selectedClass,
+                        initialValue: selectedClass,
                         items: List.generate(12, (i) => 'Class ${i + 1}').map((val) => DropdownMenuItem(value: val, child: Text(val))).toList(),
                         onChanged: isEditing ? null : (val) => setSheetState(() => selectedClass = val),
                       ),
@@ -263,7 +263,7 @@ class _FeeManagementScreenState extends State<FeeManagementScreen> {
                         title: Text(Translations.get('Allow Installments', isUrdu)),
                         value: allowInstallments,
                         onChanged: (val) => setSheetState(() => allowInstallments = val),
-                        activeColor: const Color(0xFF2168F8),
+                        activeThumbColor: const Color(0xFF2168F8),
                       ),
                       
                       const SizedBox(height: 25),

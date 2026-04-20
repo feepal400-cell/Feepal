@@ -8,13 +8,10 @@ import 'navigation_helper.dart';
 import 'services/firebase_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:excel/excel.dart' as excel_pkg;
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
-import 'package:path/path.dart' as p;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Note: dart:io is only used for the File type in a local context to avoid web crashes
-import 'dart:io' as io;
 
 class StudentManagementScreen extends StatefulWidget {
   const StudentManagementScreen({super.key});
@@ -392,8 +389,9 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
     Map<String, int> colMap = {};
     for (int i = 0; i < headerRow.length; i++) {
         String cell = headerRow[i]?.value?.toString().toLowerCase() ?? '';
-        if (cell.contains('roll') || cell.contains('no')) colMap['roll'] = i;
-        else if ((cell.contains('student') || cell.contains('name')) && !cell.contains('parent')) colMap['name'] = i;
+        if (cell.contains('roll') || cell.contains('no')) {
+          colMap['roll'] = i;
+        } else if ((cell.contains('student') || cell.contains('name')) && !cell.contains('parent')) colMap['name'] = i;
         else if (cell.contains('parent') && cell.contains('name')) colMap['pname'] = i;
         else if (cell.contains('class') || cell.contains('grade')) colMap['class'] = i;
         else if (cell.contains('fee') || cell.contains('monthly') || cell.contains('amount')) colMap['fee'] = i;
@@ -744,7 +742,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                               if (snapshot.connectionState == ConnectionState.waiting) {
                                 return const Center(
                                   child: Padding(
-                                    padding: const EdgeInsets.only(top: 50),
+                                    padding: EdgeInsets.only(top: 50),
                                     child: CircularProgressIndicator(color: Color(0xFF2168F8)),
                                   ),
                                 );

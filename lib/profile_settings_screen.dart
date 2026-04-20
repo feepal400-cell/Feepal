@@ -113,7 +113,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
               ),
             ),
           ),
-          if (trailing != null) trailing,
+          ?trailing,
         ],
         ),
       ),
