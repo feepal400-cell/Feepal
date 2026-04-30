@@ -17,7 +17,9 @@ class FeeManagementScreen extends StatefulWidget {
 
 class _FeeManagementScreenState extends State<FeeManagementScreen> {
   final FirebaseService _firebaseService = FirebaseService();
-  final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController(); // This will act as baseFee
+  final TextEditingController _additionalController = TextEditingController();
+  final TextEditingController _penaltyController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
 
   Widget _buildFeeCard(
@@ -94,6 +96,7 @@ class _FeeManagementScreenState extends State<FeeManagementScreen> {
               ),
             ],
           ),
+
           if (hasInstallments) ...[
             const SizedBox(height: 12),
             Container(
@@ -151,9 +154,13 @@ class _FeeManagementScreenState extends State<FeeManagementScreen> {
     DateTime? selectedDate = feeData?['dueDateRaw'] != null ? (feeData!['dueDateRaw'] as Timestamp).toDate() : null;
     
     if (isEditing) {
-      _amountController.text = feeData['amount'] ?? '';
+      _amountController.text = feeData['baseFee']?.toString() ?? feeData['amount'] ?? '';
+      _additionalController.text = feeData['additionalCharge']?.toString() ?? '';
+      _penaltyController.text = feeData['penaltyAmount']?.toString() ?? '';
     } else {
       _amountController.clear();
+      _additionalController.clear();
+      _penaltyController.clear();
     }
 
     showModalBottomSheet(
@@ -164,6 +171,7 @@ class _FeeManagementScreenState extends State<FeeManagementScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
       builder: (context) {
+        bool isSaving = false; // Add local state for the builder
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setSheetState) {
             return Directionality(
@@ -218,7 +226,29 @@ class _FeeManagementScreenState extends State<FeeManagementScreen> {
                         controller: _amountController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          labelText: Translations.get('Fee Amount (Rs.)', isUrdu),
+                          labelText: Translations.get('Base Fee (Rs.)', isUrdu),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 15),
+
+                      TextField(
+                        controller: _additionalController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: Translations.get('Additional Charges (Rs.)', isUrdu),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 15),
+
+                      TextField(
+                        controller: _penaltyController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: Translations.get('Late Penalty (Rs.)', isUrdu),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
@@ -272,25 +302,62 @@ class _FeeManagementScreenState extends State<FeeManagementScreen> {
                         width: double.infinity,
                         height: 55,
                         child: ElevatedButton(
-                          onPressed: () async {
+                          onPressed: isSaving ? null : () async {
+                            if (isSaving) return;
                             if (selectedClass == null || _amountController.text.isEmpty || selectedDate == null) {
                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All fields are required.')));
                               return;
                             }
+
+                            setSheetState(() => isSaving = true);
                             
-                            final feeData = {
-                              'className': selectedClass,
-                              'amount': _amountController.text,
-                              'dueDate': "${selectedDate!.month}/${selectedDate!.day}/${selectedDate!.year}",
-                              'dueDateRaw': selectedDate,
-                              'allowInstallments': allowInstallments,
-                            };
-                            
-                            await _firebaseService.saveClassFee(feeData);
-                            if (mounted) Navigator.pop(context);
+                            try {
+                              if (!isEditing) {
+                                bool exists = await _firebaseService.checkFeeExists(selectedClass!);
+                                if (exists) {
+                                  if (context.mounted) {
+                                    setSheetState(() => isSaving = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$selectedClass fees already created')));
+                                  }
+                                  return;
+                                }
+                              }
+
+                              final feeData = {
+                                'className': selectedClass,
+                                'baseFee': _amountController.text,
+                                'additionalCharge': _additionalController.text.isEmpty ? '0' : _additionalController.text,
+                                'penaltyAmount': _penaltyController.text.isEmpty ? '0' : _penaltyController.text,
+                                'amount': (double.parse(_amountController.text) + double.parse(_additionalController.text.isEmpty ? '0' : _additionalController.text)).toStringAsFixed(0),
+                                'dueDate': "${selectedDate!.month}/${selectedDate!.day}/${selectedDate!.year}",
+                                'dueDateRaw': selectedDate,
+                                'allowInstallments': allowInstallments,
+                              };
+                              
+                              await _firebaseService.saveClassFee(feeData);
+                              
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Fee structure saved successfully!'), backgroundColor: Colors.green),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                setSheetState(() => isSaving = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.red),
+                                );
+                              }
+                            }
                           },
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2168F8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-                          child: Text(Translations.get('Save Fee', isUrdu), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isSaving ? Colors.grey : const Color(0xFF2168F8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          ),
+                          child: isSaving 
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : Text(Translations.get('Save Fee', isUrdu), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
                       ),
                       const SizedBox(height: 30),
@@ -336,10 +403,6 @@ class _FeeManagementScreenState extends State<FeeManagementScreen> {
                     children: [
                        Row(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.white),
-                            onPressed: () => Navigator.pop(context),
-                          ),
                           Text(
                             Translations.get('Fee Management', isUrdu),
                             style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700),

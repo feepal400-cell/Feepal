@@ -5,8 +5,10 @@ import 'parent_dashboard_screen.dart';
 import 'parent_fees_screen.dart';
 import 'parent_voucher_screen.dart';
 import 'parent_profile_screen.dart';
+import 'services/firebase_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum NotificationFilter { all, unread, reminders }
+enum NotificationFilter { all, unread, reminders, important }
 
 class NotificationItem {
   final int id;
@@ -40,83 +42,33 @@ class ParentAlertsScreen extends StatefulWidget {
 }
 
 class _ParentAlertsScreenState extends State<ParentAlertsScreen> {
+  final FirebaseService _firebaseService = FirebaseService();
   NotificationFilter _currentFilter = NotificationFilter.all;
-  
-  final List<NotificationItem> _notifications = [
-    NotificationItem(
-      id: 1,
-      title: 'Payment reminder',
-      description: 'Your next installment of Rs. 2,500 is due on January 05, 2026',
-      timeAgo: '2 hours ago',
-      icon: Icons.notifications_none,
-      iconColor: const Color(0xFF1976D2), // Blue
-      iconBgColor: const Color(0xFFBBDEFB), // Light Blue
-      isUnread: true,
-      isReminder: true,
-    ),
-    NotificationItem(
-      id: 2,
-      title: 'Payment Verified',
-      description: 'Your payment of Rs. 2,500 has been verified and approved',
-      timeAgo: '3 hours ago',
-      icon: Icons.check_circle_outline,
-      iconColor: const Color(0xFF388E3C), // Green
-      iconBgColor: const Color(0xFFC8E6C9), // Light Green
-      isUnread: true,
-      isReminder: false,
-    ),
-    NotificationItem(
-      id: 3,
-      title: 'Payment Received',
-      description: 'Your payment voucher has been received and is under verification',
-      timeAgo: '3 hours ago',
-      icon: Icons.check_circle_outline,
-      iconColor: const Color(0xFF388E3C),
-      iconBgColor: const Color(0xFFC8E6C9),
-      isUnread: false,
-      isReminder: false,
-    ),
-    NotificationItem(
-      id: 4,
-      title: 'Due Date Approaching',
-      description: 'Only 5 days left until your payment due date',
-      timeAgo: '8 hours ago',
-      icon: Icons.priority_high,
-      iconColor: const Color(0xFFF57C00), // Orange
-      iconBgColor: const Color(0xFFFFE0B2), // Light Orange
-      isUnread: false,
-      isReminder: true,
-    ),
-    NotificationItem(
-      id: 5,
-      title: 'Fee Structure Updated',
-      description: 'New fee structure for next semester has been released',
-      timeAgo: '9 days ago',
-      icon: Icons.notifications_none,
-      iconColor: const Color(0xFF1976D2),
-      iconBgColor: const Color(0xFFBBDEFB),
-      isUnread: false,
-      isReminder: true,
-    ),
-  ];
+  Map<String, dynamic>? _parentData;
 
-  List<NotificationItem> get _filteredNotifications {
-    switch (_currentFilter) {
-      case NotificationFilter.all:
-        return _notifications;
-      case NotificationFilter.unread:
-        return _notifications.where((n) => n.isUnread).toList();
-      case NotificationFilter.reminders:
-        return _notifications.where((n) => n.isReminder).toList();
-    }
+  @override
+  void initState() {
+    super.initState();
+    _parentData = _firebaseService.selectedStudent;
   }
 
   void _markAllAsRead() {
-    setState(() {
-      for (var n in _notifications) {
-        n.isUnread = false;
-      }
-    });
+    if (_parentData == null) return;
+    _firebaseService.markAllNotificationsAsRead(
+      _parentData!['adminId'],
+      _parentData!['docId'].toString(),
+    );
+  }
+
+  String _getTimeAgo(dynamic timestamp) {
+    if (timestamp == null) return 'just now';
+    if (timestamp is! Timestamp) return 'just now';
+    DateTime dt = timestamp.toDate();
+    Duration diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 
   Widget _buildFilterChip(String labelKey, NotificationFilter filterValue, bool isUrdu) {
@@ -165,14 +117,39 @@ class _ParentAlertsScreenState extends State<ParentAlertsScreen> {
     );
   }
 
-  Widget _buildNotificationCard(NotificationItem item, bool isUrdu) {
+  Widget _buildNotificationCard(Map<String, dynamic> data, bool isRead, bool isUrdu) {
+    bool isWelcome = data['iconType'] == 'welcome';
+    bool isFee = data['iconType'] == 'fee';
+    
+    IconData icon;
+    Color iconColor;
+    
+    if (isWelcome) {
+      icon = Icons.celebration;
+      iconColor = Colors.orange;
+    } else if (isFee) {
+      icon = Icons.account_balance_wallet;
+      iconColor = Colors.amber[800]!;
+    } else if (data['iconType'] == 'priority') {
+      icon = Icons.report_problem;
+      iconColor = Colors.red;
+    } else if (data['isReminder'] == true) {
+      icon = Icons.alarm;
+      iconColor = Colors.red;
+    } else {
+      icon = Icons.notifications_none;
+      iconColor = const Color(0xFF00D4FF);
+    }
+    
+    Color iconBgColor = iconColor.withValues(alpha: 0.1);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        border: item.isUnread 
+        border: !isRead 
           ? Border.all(color: const Color(0xFF00D4FF), width: 1.5)
           : Border.all(color: Colors.transparent, width: 1.5),
         boxShadow: [
@@ -189,28 +166,26 @@ class _ParentAlertsScreenState extends State<ParentAlertsScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Icon Map
               Container(
                 width: 45,
                 height: 45,
                 decoration: BoxDecoration(
-                  color: item.iconBgColor,
+                  color: iconBgColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  item.icon,
-                  color: item.iconColor,
+                  icon,
+                  color: iconColor,
                   size: 22,
                 ),
               ),
               const SizedBox(width: 15),
-              // Content Text
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      Translations.get(item.title, isUrdu),
+                      data['title'] ?? 'Notification',
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -219,7 +194,7 @@ class _ParentAlertsScreenState extends State<ParentAlertsScreen> {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      Translations.get(item.description, isUrdu),
+                      data['description'] ?? '',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey[700],
@@ -228,7 +203,7 @@ class _ParentAlertsScreenState extends State<ParentAlertsScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      Translations.get(item.timeAgo, isUrdu),
+                      _getTimeAgo(data['timestamp']),
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey[500],
@@ -237,12 +212,11 @@ class _ParentAlertsScreenState extends State<ParentAlertsScreen> {
                   ],
                 ),
               ),
-              // Right side padding space for the unread dot
-              if (item.isUnread) const SizedBox(width: 25),
+              if (!isRead) const SizedBox(width: 25),
             ],
           ),
           
-          if (item.isUnread)
+          if (!isRead)
             Positioned(
               right: 0,
               top: 0,
@@ -310,69 +284,108 @@ class _ParentAlertsScreenState extends State<ParentAlertsScreen> {
                   ),
                 ),
                 
-                // Scrolling Content Area
                 Expanded(
-                  child: Column(
-                    children: [
-                      // Filter Chips Row
-                      Padding(
-                        padding: const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 10),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              _buildFilterChip('All', NotificationFilter.all, isUrdu),
-                              _buildFilterChip('Unread', NotificationFilter.unread, isUrdu),
-                              _buildFilterChip('Reminders', NotificationFilter.reminders, isUrdu),
-                            ],
-                          ),
-                        ),
-                      ),
-                      
-                      // List of Alerts
-                      Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                          itemCount: _filteredNotifications.length,
-                          itemBuilder: (context, index) {
-                            return _buildNotificationCard(_filteredNotifications[index], isUrdu);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // Fixed Bottom "Mark All as Read" Button Area
-                Container(
-                  color: const Color(0xFFFAFAFA),
-                  padding: const EdgeInsets.all(20),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _markAllAsRead();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(Translations.get('All notifications marked as read', isUrdu)),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF00D4FF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15), 
-                        ),
-                        elevation: 2, // Slight floating shadow per design
-                      ),
-                      child: Text(
-                        Translations.get('Mark All as Read', isUrdu),
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: _firebaseService.getNotificationsStream(
+                      _parentData!['adminId'],
+                      _parentData!['docId'].toString(),
                     ),
+                    builder: (context, snapshot) {
+                      var allDocs = snapshot.data?.docs ?? [];
+                      var filteredDocs = allDocs.where((doc) {
+                        var data = doc.data() as Map<String, dynamic>;
+                        if (_currentFilter == NotificationFilter.unread) {
+                          return data['isRead'] == false;
+                        } else if (_currentFilter == NotificationFilter.reminders) {
+                          return data['isReminder'] == true;
+                        } else if (_currentFilter == NotificationFilter.important) {
+                          return data['isImportant'] == true;
+                        }
+                        return true;
+                      }).toList();
+
+                      return Column(
+                        children: [
+                          // Filter Chips Row
+                          Padding(
+                            padding: const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 10),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _buildFilterChip('All', NotificationFilter.all, isUrdu),
+                                  _buildFilterChip('Unread', NotificationFilter.unread, isUrdu),
+                                  _buildFilterChip('Reminders', NotificationFilter.reminders, isUrdu),
+                                  _buildFilterChip('Important', NotificationFilter.important, isUrdu),
+                                ],
+                              ),
+                            ),
+                          ),
+                          
+                          Expanded(
+                            child: snapshot.connectionState == ConnectionState.waiting
+                              ? const Center(child: CircularProgressIndicator())
+                              : (filteredDocs.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.notifications_off_outlined, size: 60, color: Colors.grey[300]),
+                                        const SizedBox(height: 15),
+                                        Text(
+                                          Translations.get('No notifications yet', isUrdu),
+                                          style: TextStyle(color: Colors.grey[400], fontSize: 16),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                                    itemCount: filteredDocs.length,
+                                    itemBuilder: (context, index) {
+                                      var doc = filteredDocs[index];
+                                      var data = doc.data() as Map<String, dynamic>;
+                                      return _buildNotificationCard(data, data['isRead'] ?? false, isUrdu);
+                                    },
+                                  )),
+                          ),
+
+                          // Fixed Bottom "Mark All as Read" Button Area
+                          if (allDocs.any((doc) => (doc.data() as Map<String, dynamic>)['isRead'] == false))
+                            Container(
+                              color: const Color(0xFFFAFAFA),
+                              padding: const EdgeInsets.all(20),
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    _markAllAsRead();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(Translations.get('All notifications marked as read', isUrdu)),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: const Color(0xFF00D4FF),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15), 
+                                    ),
+                                    elevation: 2,
+                                  ),
+                                  child: Text(
+                                    Translations.get('Mark All as Read', isUrdu),
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],

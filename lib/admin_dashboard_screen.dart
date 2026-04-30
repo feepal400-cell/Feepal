@@ -7,6 +7,7 @@ import 'alerts_screen.dart';
 import 'profile_settings_screen.dart';
 import 'navigation_helper.dart';
 import 'services/firebase_service.dart';
+import 'activity_history_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -28,6 +29,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Future<void> _loadAdminData() async {
+    // Check and renew fees in the background
+    _firebaseService.checkAndRenewExpiredFees().catchError((e) {
+      debugPrint("Error renewing fees: $e");
+    });
+
+    // Trigger automated checks for penalties and priority alerts
+    _firebaseService.runAutomatedChecks().catchError((e) {
+      debugPrint("Error running automated checks: $e");
+    });
+
     final data = await _firebaseService.getAdminProfile();
     if (mounted && data != null) {
       setState(() {
@@ -35,12 +46,80 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         _adminName = data['adminName'] ?? '';
         _isLoading = false;
       });
+      
+      // Check for subscription welcome popup
+      _checkSubscriptionWelcome(data);
     } else if (mounted) {
       setState(() {
         _schoolName = 'FeePal School';
         _isLoading = false;
       });
     }
+  }
+
+  void _checkSubscriptionWelcome(Map<String, dynamic> data) {
+    final subStatus = data['subscriptionStatus'];
+    final hasSeenWelcome = data['hasSeenWelcome'] ?? true;
+    final isUrdu = languageNotifier.value;
+
+    if (subStatus == 'approved' && !hasSeenWelcome) {
+      // Delay slightly to ensure UI is ready
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _showWelcomePopup(isUrdu, data['uid']);
+        }
+      });
+    }
+  }
+
+  void _showWelcomePopup(bool isUrdu, String uid) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Icon(Icons.celebration, color: Colors.orange, size: 60),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              Translations.get('Congratulations!', isUrdu),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 15),
+            Text(
+              Translations.get('Your subscription has been successfully enabled by FeePal Team.', isUrdu),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 15),
+            Text(
+              Translations.get('Make sure to update your bank details and school profile.', isUrdu),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          Center(
+            child: ElevatedButton(
+              onPressed: () {
+                _firebaseService.updateWelcomeFlag(uid);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2168F8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Text(Translations.get('Get Started', isUrdu), style: const TextStyle(color: Colors.white, fontSize: 16)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildStatCard(
@@ -277,12 +356,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               ),
                               const SizedBox(width: 15),
                               Expanded(
-                                child: _buildStatCard(
-                                  context,
-                                  const Color(0xFFEF5350),
-                                  Icons.error_outline,
-                                  'Overdue',
-                                  '0',
+                                child: StreamBuilder<int>(
+                                  stream: _firebaseService.getOverdueStudentsCountStream(),
+                                  builder: (context, snapshot) {
+                                    return _buildStatCard(
+                                      context,
+                                      const Color(0xFFEF5350),
+                                      Icons.error_outline,
+                                      'Overdue',
+                                      (snapshot.data ?? 0).toString(),
+                                    );
+                                  }
                                 ),
                               ),
                             ],
@@ -354,39 +438,149 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           const SizedBox(height: 35),
 
                           // Recent Activity
-                          Text(
-                            Translations.get('Recent Activity', isUrdu),
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                Translations.get('Recent Activity', isUrdu),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const ActivityHistoryScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  Translations.get('View All', isUrdu),
+                                  style: const TextStyle(
+                                    color: Color(0xFF2168F8),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 15),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 30,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: const Center(
-                              child: Text(
-                                'No recent activity yet',
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                            ),
+                          StreamBuilder<QuerySnapshot>(
+                            stream: _firebaseService.getAdminActivityStream(),
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                                return Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 30,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.08),
+                                        blurRadius: 15,
+                                        spreadRadius: 2,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      'No recent activity yet',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              return Column(
+                                children: snapshot.data!.docs.take(5).map((doc) {
+                                  var data = doc.data() as Map<String, dynamic>;
+                                  IconData icon;
+                                  Color color;
+
+                                  switch (data['iconType']) {
+                                    case 'welcome':
+                                      icon = Icons.celebration_outlined;
+                                      color = Colors.orange;
+                                      break;
+                                    case 'student':
+                                      icon = Icons.person_add_outlined;
+                                      color = Colors.blue;
+                                      break;
+                                    case 'fee':
+                                      icon = Icons.receipt_long_outlined;
+                                      color = Colors.green;
+                                      break;
+                                    case 'alert':
+                                    case 'notification':
+                                      icon = Icons.notifications_active_outlined;
+                                      color = Colors.purple;
+                                      break;
+                                    default:
+                                      icon = Icons.info_outline;
+                                      color = Colors.grey;
+                                  }
+
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    padding: const EdgeInsets.all(15),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(15),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.05),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: color.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(icon, color: color, size: 24),
+                                        ),
+                                        const SizedBox(width: 15),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                data['title'] ?? '',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+                                              Text(
+                                                data['subtitle'] ?? '',
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              );
+                            }
                           ),
                         ],
                       ),

@@ -30,11 +30,18 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
   final TextEditingController _parentEmailController = TextEditingController();
   final TextEditingController _feeController = TextEditingController();
   final TextEditingController _parentPasswordController = TextEditingController();
+  final TextEditingController _arrearsBalanceController = TextEditingController();
+  final TextEditingController _siblingDiscountController = TextEditingController();
+  bool _obscureParentPasswordInSheet = true;
+  bool _isParentLocked = false;
 
   Widget _buildStudentCard(Map<String, dynamic> student, bool isUrdu) {
     String name = student['studentName'] ?? 'No Name';
     String rollNo = student['rollNumber'] ?? 'N/A';
     String fee = student['lastFeeAmount'] ?? '0';
+    double feeVal = double.tryParse(fee.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+    double arrearsVal = double.tryParse(student['arrearsBalance']?.toString() ?? '0') ?? 0.0;
+    String effectiveStatus = (student['feeStatus']?.toString().toLowerCase() == 'unpaid' || feeVal > 0 || arrearsVal > 0) ? 'unpaid' : 'paid';
     bool isMissingEmail = (student['parentEmail'] ?? '').isEmpty;
 
     return GestureDetector(
@@ -66,10 +73,10 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                       Flexible(
                         child: Text(
                           name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: (student['parentStatus'] == 'Priority') ? Colors.orange : Colors.black87,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -94,7 +101,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2AA943),
+                          color: const Color(0xFF2168F8),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
@@ -102,6 +109,16 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                           color: Colors.white,
                           size: 20,
                         ),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Balance: Rs. ${student['arrearsBalance'] ?? '0'}",
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -116,7 +133,33 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                   size: 18,
                   color: Colors.black.withValues(alpha: 0.2),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
+                Tooltip(
+                  message: (effectiveStatus == 'unpaid')
+                      ? 'Fees are pending' 
+                      : 'Fee is paid',
+                  triggerMode: TooltipTriggerMode.tap,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (effectiveStatus == 'paid') 
+                          ? Colors.green.withValues(alpha: 0.1) 
+                          : Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      effectiveStatus.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: (effectiveStatus == 'paid') 
+                            ? Colors.green 
+                            : Colors.red,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 5),
                 Text(
                   "Rs. $fee",
                   style: const TextStyle(
@@ -142,7 +185,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
         hintStyle: const TextStyle(color: Colors.black38),
         suffixText: suffix,
         suffixIcon: suffixIcon,
-        suffixStyle: const TextStyle(color: Colors.black26, fontSize: 12),
+        suffixStyle: const TextStyle(color: Colors.black45, fontSize: 12),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -167,16 +210,21 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
   void _showAddStudentBottomSheet(BuildContext context, bool isUrdu, {Map<String, dynamic>? studentData}) {
     final bool isEditing = studentData != null;
     String selectedStatus = studentData?['feeStatus'] ?? 'Unpaid';
+    String selectedParentStatus = studentData?['parentStatus'] ?? 'Standard';
 
     if (isEditing) {
+      _obscureParentPasswordInSheet = true; // Reset visibility on edit
       _nameController.text = studentData['studentName'] ?? '';
       _classController.text = studentData['class'] ?? '';
       _rollController.text = studentData['rollNumber'] ?? '';
       _parentNameController.text = studentData['parentName'] ?? '';
       _parentPhoneController.text = studentData['parentPhone'] ?? '';
       _parentEmailController.text = studentData['parentEmail'] ?? '';
-      _feeController.text = studentData['lastFeeAmount'] ?? '';
-      _parentPasswordController.text = studentData['parentPassword'] ?? _firebaseService.generatePassword();
+      _feeController.text = studentData['lastFeeAmount']?.toString() ?? '';
+      _parentPasswordController.text = studentData['parentPassword']?.toString() ?? '';
+      _arrearsBalanceController.text = (studentData['arrearsBalance'] ?? studentData['oldDues'] ?? '0').toString();
+      _siblingDiscountController.text = (studentData['siblingDiscountPercentage'] ?? 0).toString();
+      _isParentLocked = isEditing;
     } else {
       _nameController.clear();
       _classController.clear();
@@ -185,6 +233,11 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
       _parentPhoneController.clear();
       _parentEmailController.clear();
       _feeController.clear();
+      _parentPasswordController.clear();
+      _arrearsBalanceController.text = '0';
+      _siblingDiscountController.text = '0';
+      _isParentLocked = false;
+      _obscureParentPasswordInSheet = true; // Reset visibility on add
       _parentPasswordController.text = _firebaseService.generatePassword();
     }
 
@@ -232,25 +285,27 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                       const SizedBox(height: 20),
                       _buildTextField('Student Name', isUrdu, _nameController, suffix: 'Name'),
                       const SizedBox(height: 15),
+                      _buildTextField('Class', isUrdu, _classController, suffix: 'Class'),
+                      const SizedBox(height: 15),
                       Row(
                         children: [
-                          Expanded(child: _buildTextField('Class', isUrdu, _classController, suffix: 'Class')),
+                          Expanded(child: _buildTextField('Fees (Rs.)', isUrdu, _feeController, suffix: 'Fee')),
                           const SizedBox(width: 15),
-                          Expanded(
-                            child: _buildTextField(
-                              'Roll Number',
-                              isUrdu,
-                              _rollController,
-                              enabled: !isEditing,
-                              suffix: 'Roll No',
-                            ),
-                          ),
+                          Expanded(child: _buildTextField('Arrears Balance (Rs.)', isUrdu, _arrearsBalanceController, suffix: 'Bal')),
                         ],
                       ),
                       const SizedBox(height: 15),
                       Row(
                         children: [
-                          Expanded(child: _buildTextField('Fees (Rs.)', isUrdu, _feeController, suffix: 'Fee')),
+                          Expanded(
+                            child: _buildTextField(
+                              'Roll Number',
+                              isUrdu,
+                              _rollController,
+                              enabled: true,
+                              suffix: 'Roll No',
+                            ),
+                          ),
                           const SizedBox(width: 15),
                           Expanded(
                             child: Container(
@@ -280,26 +335,135 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                         ],
                       ),
                       const SizedBox(height: 15),
-                      _buildTextField('Parent Name', isUrdu, _parentNameController, suffix: 'Parent'),
+                      
+                      // Parent Lookup Row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField('Parent Email', isUrdu, _parentEmailController, 
+                              suffix: 'Email', 
+                              enabled: true
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          if (!isEditing) 
+                            IconButton.filled(
+                              onPressed: () async {
+                                if (_parentEmailController.text.isEmpty) return;
+                                final parentData = await _firebaseService.findParentByEmail(_parentEmailController.text);
+                                if (parentData != null) {
+                                  setSheetState(() {
+                                    _parentNameController.text = parentData['parentName'] ?? '';
+                                    _parentPhoneController.text = parentData['parentPhone'] ?? '';
+                                    _parentPasswordController.text = parentData['parentPassword'] ?? '';
+                                    selectedParentStatus = parentData['parentStatus'] ?? 'Standard';
+                                    _isParentLocked = true;
+                                  });
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Existing Parent Found! Credentials Locked.'))
+                                    );
+                                  }
+                                } else {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('No existing parent found with this email.'))
+                                    );
+                                  }
+                                }
+                              }, 
+                              icon: const Icon(Icons.person_search),
+                              style: IconButton.styleFrom(backgroundColor: const Color(0xFF2168F8)),
+                            ),
+                          if (_isParentLocked && !isEditing)
+                            IconButton.filled(
+                              onPressed: () => setSheetState(() => _isParentLocked = false),
+                              icon: const Icon(Icons.lock_open),
+                              style: IconButton.styleFrom(backgroundColor: Colors.red),
+                            ),
+                        ],
+                      ),
                       const SizedBox(height: 15),
-                      _buildTextField('Parent Phone', isUrdu, _parentPhoneController, suffix: 'Phone'),
+                      _buildTextField('Parent Name', isUrdu, _parentNameController, suffix: 'Parent', enabled: true),
                       const SizedBox(height: 15),
-                      _buildTextField('Parent Email', isUrdu, _parentEmailController, suffix: 'Email'),
+                      _buildTextField('Parent Phone', isUrdu, _parentPhoneController, suffix: 'Phone', enabled: true),
                       const SizedBox(height: 15),
-                      _buildTextField(
-                        'Parent Password',
-                        isUrdu,
-                        _parentPasswordController,
-                        suffix: 'Pass',
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.refresh, color: Color(0xFF2168F8)),
-                          onPressed: () {
-                            _showRegenerateConfirmDialog(context, isUrdu, () {
+                      
+                      // Parent Status Dropdown
+                      Text(
+                        Translations.get('Parent Status', isUrdu),
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.black12),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedParentStatus,
+                            dropdownColor: Colors.white,
+                            isExpanded: true,
+                            items: ['Standard', 'Priority'].map((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) setSheetState(() => selectedParentStatus = val);
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      _buildTextField('Sibling Discount (%)', isUrdu, _siblingDiscountController, suffix: '%'),
+                      const SizedBox(height: 15),
+                      TextField(
+                        controller: _parentPasswordController,
+                        enabled: true,
+                        obscureText: _obscureParentPasswordInSheet,
+                        decoration: InputDecoration(
+                          hintText: Translations.get('Parent Password', isUrdu),
+                          hintStyle: const TextStyle(color: Colors.black38),
+                          suffixText: 'Pass',
+                          suffixStyle: const TextStyle(color: Colors.black45, fontSize: 12),
+                          prefixIcon: IconButton(
+                            icon: Icon(
+                              _obscureParentPasswordInSheet ? Icons.visibility_off : Icons.visibility,
+                              color: const Color(0xFF2168F8),
+                            ),
+                            onPressed: () {
                               setSheetState(() {
-                                _parentPasswordController.text = _firebaseService.generatePassword();
+                                _obscureParentPasswordInSheet = !_obscureParentPasswordInSheet;
                               });
-                            });
-                          },
+                            },
+                          ),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.refresh, color: Color(0xFF2168F8)),
+                            onPressed: () {
+                              _showRegenerateConfirmDialog(context, isUrdu, () {
+                                setSheetState(() {
+                                  _parentPasswordController.text = _firebaseService.generatePassword();
+                                });
+                              });
+                            },
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.black12),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.black12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF2168F8)),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 25),
@@ -317,20 +481,26 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
 
                             final studentPayload = {
                               'studentName': _nameController.text,
-                              'class': _classController.text,
+                              'class': _normalizeClassName(_classController.text),
                               'rollNumber': _rollController.text,
                               'parentName': _parentNameController.text,
                               'parentPhone': _parentPhoneController.text,
                               'parentEmail': _parentEmailController.text,
                               'lastFeeAmount': _feeController.text.isEmpty ? '0' : _feeController.text,
+                              'arrearsBalance': num.tryParse(_arrearsBalanceController.text) ?? 0,
                               'feeStatus': selectedStatus,
+                              'parentStatus': selectedParentStatus,
+                              'siblingDiscountPercentage': num.tryParse(_siblingDiscountController.text) ?? 0,
                               'parentPassword': _parentPasswordController.text,
                             };
 
                             Navigator.pop(context);
 
                             try {
-                              await _firebaseService.addOrUpdateStudent(studentPayload);
+                              await _firebaseService.addOrUpdateStudent(
+                                studentPayload, 
+                                oldDocId: studentData?['docId']
+                              );
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
@@ -360,7 +530,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                           width: double.infinity,
                           height: 55,
                           child: OutlinedButton(
-                            onPressed: () => _showDeleteConfirmDialog(context, _rollController.text, isUrdu),
+                            onPressed: () => _showDeleteConfirmDialog(context, studentData['docId'], isUrdu),
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Colors.red),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -767,7 +937,9 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: snapshot.data!.docs.length,
                                 itemBuilder: (context, index) {
-                                  var student = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                                  var doc = snapshot.data!.docs[index];
+                                  var student = doc.data() as Map<String, dynamic>;
+                                  student['docId'] = doc.id; // Inject Document ID
                                   return _buildStudentCard(student, isUrdu);
                                 },
                               );
@@ -890,7 +1062,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
     );
   }
 
-  void _showDeleteConfirmDialog(BuildContext context, String rollNo, bool isUrdu) {
+  void _showDeleteConfirmDialog(BuildContext context, String studentId, bool isUrdu) {
     showDialog(
       context: context,
       builder: (context) {
@@ -916,7 +1088,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                   
                   // 2. Perform deletion in the background
                   try {
-                    _firebaseService.deleteStudent(rollNo).then((_) {
+                    _firebaseService.deleteStudent(studentId).then((_) {
                       debugPrint("✅ Student successfully removed in background");
                     });
 
@@ -942,5 +1114,23 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
         );
       },
     );
+  }
+  String _normalizeClassName(String input) {
+    String trimmed = input.trim();
+    if (trimmed.isEmpty) return 'Unknown';
+    
+    // If it's already "Class X" or "class X", just return as "Class X"
+    if (trimmed.toLowerCase().startsWith('class ')) {
+      String num = trimmed.substring(6).trim();
+      return 'Class $num';
+    }
+    
+    // If it's just a number, prepend "Class "
+    if (RegExp(r'^\d+$').hasMatch(trimmed)) {
+      return 'Class $trimmed';
+    }
+    
+    // Fallback: capitalized first letter of each word
+    return trimmed.split(' ').map((str) => str.isNotEmpty ? str[0].toUpperCase() + str.substring(1) : '').join(' ');
   }
 }

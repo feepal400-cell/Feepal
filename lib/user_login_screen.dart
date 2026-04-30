@@ -6,6 +6,9 @@ import 'admin_dashboard_screen.dart';
 import 'parent_dashboard_screen.dart';
 import 'navigation_helper.dart';
 import 'package:main_dart/services/firebase_service.dart';
+import 'subscription_screen.dart';
+import 'super_admin_dashboard.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class UserLoginScreen extends StatefulWidget {
   const UserLoginScreen({super.key});
@@ -20,6 +23,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
   final FirebaseService _firebaseService = FirebaseService();
   bool isParentSelected = false;
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -43,24 +47,34 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
       return;
     }
 
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(Translations.get('Invalid email format.', isUrdu)),
-        ),
-      );
-      return;
+    if (!isParentSelected) {
+      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+      if (!emailRegex.hasMatch(email)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(Translations.get('Invalid email format.', isUrdu)),
+          ),
+        );
+        return;
+      }
     }
 
     setState(() {
       _isLoading = true;
     });
 
-    final error = await _firebaseService.login(
-      email: email,
-      password: password,
-    );
+    String? error;
+    if (isParentSelected) {
+      error = await _firebaseService.loginParent(
+        email: email,
+        password: password,
+      );
+    } else {
+      error = await _firebaseService.login(
+        email: email,
+        password: password,
+      );
+    }
 
     if (!mounted) return;
 
@@ -69,16 +83,53 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
     });
 
     if (error == null) {
-      navigateWithLoader(context, () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => isParentSelected
-                ? const ParentDashboardScreen()
-                : const AdminDashboardScreen(),
-          ),
-        );
-      });
+      if (isParentSelected) {
+        if (_firebaseService.selectedStudent != null) {
+          final session = _firebaseService.selectedStudent!;
+          _firebaseService.checkAndSendWelcomeNotification(
+            session['adminId'],
+            session['rollNumber'].toString(),
+          );
+        }
+        navigateWithLoader(context, () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ParentDashboardScreen()),
+          );
+        });
+      } else {
+        // Admin Login Logic
+        User? user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          // Auto-initialize Super Admin document if email matches
+          await _firebaseService.ensureSuperAdminDocument(user.uid, user.email ?? '');
+          
+          final adminData = await _firebaseService.getAdminData(user.uid);
+          if (adminData != null) {
+            String role = adminData['role'] ?? 'admin';
+            String? subStatus = adminData['subscriptionStatus'];
+
+            navigateWithLoader(context, () {
+              if (role == 'super_admin') {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SuperAdminDashboard()),
+                );
+              } else if (subStatus == null || subStatus == 'approved') {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
+                );
+              } else {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => SubscriptionScreen(adminData: adminData)),
+                );
+              }
+            });
+          }
+        }
+      }
     } else {
       ScaffoldMessenger.of(
         context,
@@ -323,7 +374,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                   const SizedBox(height: 8),
                                   TextField(
                                     controller: _passwordController,
-                                    obscureText: true,
+                                    obscureText: _obscurePassword,
                                     decoration: InputDecoration(
                                       hintText: '********',
                                       hintStyle: const TextStyle(
@@ -333,6 +384,19 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                       prefixIcon: const Icon(
                                         Icons.lock_outline,
                                         color: Colors.black54,
+                                      ),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          _obscurePassword
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                          color: _primaryAccentColor,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _obscurePassword = !_obscurePassword;
+                                          });
+                                        },
                                       ),
                                       contentPadding:
                                           const EdgeInsets.symmetric(

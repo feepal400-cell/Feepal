@@ -1,13 +1,14 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'language_config.dart';
 import 'navigation_helper.dart';
 import 'parent_dashboard_screen.dart';
 import 'parent_fees_screen.dart';
 import 'parent_voucher_screen.dart';
 import 'parent_alerts_screen.dart';
-import 'settings_change_password_screen.dart';
+import 'parent_change_password_screen.dart';
 import 'user_login_screen.dart';
+import 'services/firebase_service.dart';
 
 class ParentProfileScreen extends StatefulWidget {
   const ParentProfileScreen({super.key});
@@ -17,7 +18,114 @@ class ParentProfileScreen extends StatefulWidget {
 }
 
 class _ParentProfileScreenState extends State<ParentProfileScreen> {
-  bool _notificationsEnabled = true;
+  final FirebaseService _firebaseService = FirebaseService();
+  Map<String, dynamic>? _parentData;
+  bool _smsEnabled = false;
+  bool _emailEnabled = false;
+  final bool _appNotificationsEnabled = true; // Mandatory
+
+  @override
+  void initState() {
+    super.initState();
+    _parentData = _firebaseService.selectedStudent;
+  }
+
+  Stream<DocumentSnapshot>? _getStudentStream() {
+    if (_parentData == null) return null;
+    return FirebaseFirestore.instance
+        .collection('admins')
+        .doc(_parentData!['adminId'])
+        .collection('students')
+        .doc(_parentData!['docId'].toString())
+        .snapshots();
+  }
+
+  void _showNotificationPreferences(BuildContext context, bool isUrdu) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      Translations.get('Select notification channels', isUrdu),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    )
+                  ],
+                ),
+                const SizedBox(height: 10),
+                CheckboxListTile(
+                  value: true,
+                  onChanged: null, // Mandatory
+                  title: Text(Translations.get('App Notifications', isUrdu)),
+                  subtitle: Text(Translations.get('Mandatory', isUrdu), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  activeColor: const Color(0xFF2962FF),
+                  controlAffinity: ListTileControlAffinity.trailing,
+                ),
+                CheckboxListTile(
+                  value: _smsEnabled,
+                  onChanged: (val) async {
+                    setModalState(() => _smsEnabled = val ?? false);
+                    setState(() {});
+                    await _updateNotificationPreferences();
+                  },
+                  title: Text(Translations.get('SMS Alert', isUrdu)),
+                  activeColor: const Color(0xFF2962FF),
+                  controlAffinity: ListTileControlAffinity.trailing,
+                ),
+                CheckboxListTile(
+                  value: _emailEnabled,
+                  onChanged: (val) async {
+                    setModalState(() => _emailEnabled = val ?? false);
+                    setState(() {});
+                    await _updateNotificationPreferences();
+                  },
+                  title: Text(Translations.get('Email Alert', isUrdu)),
+                  activeColor: const Color(0xFF2962FF),
+                  controlAffinity: ListTileControlAffinity.trailing,
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        }
+      ),
+    );
+  }
+
+  Future<void> _updateNotificationPreferences() async {
+    if (_parentData == null) return;
+    try {
+      await FirebaseFirestore.instance
+          .collection('admins')
+          .doc(_parentData!['adminId'])
+          .collection('students')
+          .doc(_parentData!['docId'].toString())
+          .update({
+            'notificationPreferences': {
+              'sms': _smsEnabled,
+              'email': _emailEnabled,
+              'app': true,
+            }
+          });
+    } catch (e) {
+      debugPrint("Error updating notification preferences: $e");
+    }
+  }
 
   void _showLogoutConfirmation(BuildContext context, bool isUrdu) {
     showDialog(
@@ -247,10 +355,38 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
           textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
           child: Scaffold(
             backgroundColor: const Color(0xFFFAFAFA),
-            body: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            body: StreamBuilder<DocumentSnapshot>(
+              stream: _getStudentStream(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (!snapshot.hasData || !snapshot.data!.exists) {
+                  return const Center(child: Text("Profile data not found."));
+                }
+
+                var student = snapshot.data!.data() as Map<String, dynamic>;
+                
+                // Initialize preferences from Firestore if available
+                var prefs = student['notificationPreferences'] as Map<String, dynamic>?;
+                if (prefs != null) {
+                  _smsEnabled = prefs['sms'] ?? false;
+                  _emailEnabled = prefs['email'] ?? false;
+                }
+
+                String studentName = student['studentName'] ?? 'No Name';
+                String parentName = student['parentName'] ?? 'No Name';
+                String parentEmail = student['parentEmail'] ?? '-';
+                String parentPhone = student['parentPhone'] ?? '-';
+                String className = student['class'] ?? '-';
+                String rollNo = student['rollNumber'] ?? '-';
+
+                return SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
                   // Main Profile Header Card (Top Header)
                   Container(
                     width: double.infinity,
@@ -318,7 +454,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      Translations.get('Ali Muhammad', isUrdu),
+                                      parentName,
                                       style: const TextStyle(
                                         color: Colors.black,
                                         fontSize: 20,
@@ -358,22 +494,22 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                           icon: Icons.person_outline,
                           iconColor: const Color(0xFF00BCD4),
                           labelKey: 'Name',
-                          valueKey: 'Ali Muhammad',
-                          isUrdu: isUrdu,
+                          valueKey: parentName,
+                          isUrdu: false, // Don't translate names
                         ),
                         _buildInfoRow(
                           icon: Icons.mail_outline,
                           iconColor: const Color(0xFF00BCD4),
                           labelKey: 'Email',
-                          valueKey: 'Ali.muhammad@gmail.com',
-                          isUrdu: isUrdu,
+                          valueKey: parentEmail,
+                          isUrdu: false,
                         ),
                         _buildInfoRow(
                           icon: Icons.phone_outlined,
                           iconColor: const Color(0xFF00BCD4),
                           labelKey: 'Phone',
-                          valueKey: '+92 300 1234567',
-                          isUrdu: isUrdu,
+                          valueKey: parentPhone,
+                          isUrdu: false,
                           hideBorder: true,
                         ),
                       ],
@@ -407,7 +543,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    Translations.get('Zain Muhammad', isUrdu),
+                                    studentName,
                                     style: const TextStyle(
                                       fontSize: 15,
                                       color: Colors.black87,
@@ -437,7 +573,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    Translations.get('Class 10', isUrdu),
+                                    className,
                                     style: const TextStyle(
                                       fontSize: 15,
                                       color: Colors.black87,
@@ -461,7 +597,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    Translations.get('101', isUrdu),
+                                    rollNo,
                                     style: const TextStyle(
                                       fontSize: 15,
                                       color: Colors.black87,
@@ -483,23 +619,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                     child: Column(
                       children: [
                         _buildSettingsRow(
-                          icon: Icons.lock_outline,
-                          iconColor: const Color(0xFF9C27B0), // Purple wrapper
-                          titleKey: 'Change Password',
-                          isUrdu: isUrdu,
-                          onTap: () {
-                            navigateWithLoader(context, () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SettingsChangePasswordScreen(),
-                                ),
-                              );
-                            });
-                          },
-                        ),
-                        _buildSettingsRow(
                           icon: Icons.language_outlined,
                           iconColor: const Color(0xFF00BCD4),
                           titleKey: 'Language',
@@ -510,24 +629,26 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                           },
                         ),
                         _buildSettingsRow(
+                          icon: Icons.lock_outline,
+                          iconColor: const Color(0xFF9E38FF), // Purple
+                          titleKey: 'Change Password',
+                          isUrdu: isUrdu,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ParentChangePasswordScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildSettingsRow(
                           icon: Icons.notifications_none_outlined,
                           iconColor: const Color(0xFFFF9800), // Orange
                           titleKey: 'Notification Preferences',
                           isUrdu: isUrdu,
-                          trailingWidget: SizedBox(
-                            height: 24,
-                            child: CupertinoSwitch(
-                              value: _notificationsEnabled,
-                              activeTrackColor: const Color(
-                                0xFF2962FF,
-                              ), // Blue active state
-                              onChanged: (val) {
-                                setState(() {
-                                  _notificationsEnabled = val;
-                                });
-                              },
-                            ),
-                          ),
+                          trailingWidget: const Icon(Icons.chevron_right, color: Colors.grey),
+                          onTap: () => _showNotificationPreferences(context, isUrdu),
                           hideBorder: true,
                         ),
                       ],
@@ -624,7 +745,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                   ),
                 ],
               ),
-            ),
+            );
+          },
+        ),
 
             // Bottom Navigation Bar
             bottomNavigationBar: BottomNavigationBar(

@@ -1,678 +1,540 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' hide TextDirection;
+import 'package:file_picker/file_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'services/firebase_service.dart';
 import 'language_config.dart';
-import 'navigation_helper.dart';
 import 'parent_dashboard_screen.dart';
 import 'parent_voucher_screen.dart';
 import 'parent_alerts_screen.dart';
 import 'parent_profile_screen.dart';
+import 'navigation_helper.dart';
 
-class ParentFeesScreen extends StatelessWidget {
+class ParentFeesScreen extends StatefulWidget {
   const ParentFeesScreen({super.key});
 
-  Widget _buildStatusBadge(String text, Color color, Color bgColor, bool isUrdu) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        Translations.get(text, isUrdu),
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
+  @override
+  State<ParentFeesScreen> createState() => _ParentFeesScreenState();
+}
+
+class _ParentFeesScreenState extends State<ParentFeesScreen> {
+  final FirebaseService _firebaseService = FirebaseService();
+  Map<String, dynamic>? _parentData;
+
+  // Theme Colors
+  final Color primaryColor = const Color(0xFF00BCD4); // Cyan
+  final Color secondaryColor = const Color(0xFF009688); // Teal
+  final Color accentColor = const Color(0xFFE0F7FA); // Light Cyan
+
+  @override
+  void initState() {
+    super.initState();
+    _loadParentData();
   }
 
-  Widget _buildInstallmentPill(String text, bool isUrdu) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE0F7FA), // Light cyan bg
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Text(
-        Translations.get(text, isUrdu),
-        style: const TextStyle(
-          color: Color(0xFF0097A7), // Darker cyan text
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
+  Future<void> _loadParentData() async {
+    final student = _firebaseService.selectedStudent;
+    if (student != null) {
+      setState(() {
+        _parentData = student;
+      });
+    }
   }
 
-  void _showUploadDialog(BuildContext context, bool isUrdu) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Directionality(
-          textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
-          child: Dialog(
+  void _showUploadDialog(BuildContext context, bool isUrdu) async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+      );
+
+      if (result != null) {
+        if (!context.mounted) return;
+        
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-            insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Padding(
-              padding: const EdgeInsets.all(25.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        Translations.get('Upload Voucher', isUrdu),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.close, color: Colors.black54, size: 22),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 25),
-                  
-                  // Upload dropzone
-                  GestureDetector(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(Translations.get('File picker would open here', isUrdu)),
-                          duration: const Duration(seconds: 2),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                    },
-                    child: CustomPaint(
-                      painter: DashedRectPainter(
-                        color: const Color(0xFFBDBDBD),
-                        strokeWidth: 1.5,
-                        gap: 6.0,
-                      ),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
-                        child: Column(
-                          children: [
-                            const Icon(
-                              Icons.upload_file,
-                              size: 50,
-                              color: Color(0xFF9E9E9E),
-                            ),
-                            const SizedBox(height: 15),
-                            Text(
-                              Translations.get('Drag & drop your file here', isUrdu),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              Translations.get('Or click to browse', isUrdu),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF757575),
-                              ),
-                            ),
-                            const SizedBox(height: 15),
-                            Text(
-                              Translations.get('Support formats: PDF, JPG, PNG (Max 5MB)', isUrdu),
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Color(0xFF9E9E9E),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 25),
-                  
-                  // Upload Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Close dialog
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(Translations.get('Upload simulated successfully!', isUrdu)),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00D4FF),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        Translations.get('Upload', isUrdu),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: primaryColor),
+                const SizedBox(height: 20),
+                Text(Translations.get('Processing payment proof...', isUrdu)),
+                const SizedBox(height: 10),
+                Text(
+                  Translations.get('AI is validating your voucher...', isUrdu),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
             ),
           ),
         );
-      },
-    );
+
+        await Future.delayed(const Duration(seconds: 2));
+
+        if (!context.mounted) return;
+        Navigator.pop(context);
+
+        await _firebaseService.submitPaymentProof(
+          _parentData!['adminId'],
+          _parentData!['docId'].toString(),
+        );
+
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(Translations.get('Voucher validated! Fee marked as Paid.', isUrdu)),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_parentData == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return ValueListenableBuilder<bool>(
       valueListenable: languageNotifier,
       builder: (context, isUrdu, child) {
         return Directionality(
           textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
           child: Scaffold(
-            backgroundColor: const Color(0xFFFAFAFA),
-            body: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Block with Gradient Background
-                  Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF00D4FF), Color(0xFF009BCB)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(30),
-                        bottomRight: Radius.circular(30),
-                      ),
-                    ),
-                    child: SafeArea(
-                      bottom: false,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header Row
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
-                            child: Text(
-                              Translations.get('Fee Details', isUrdu),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          
-                          // Summary Card
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                  offset: const Offset(0, 6),
+            backgroundColor: const Color(0xFFF1F5F9),
+            body: StreamBuilder<DocumentSnapshot>(
+              stream: _firebaseService.getStudentStream(_parentData!['adminId'], _parentData!['docId'].toString()),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                
+                var studentData = snapshot.data!.data() as Map<String, dynamic>;
+                String className = studentData['class']?.toString() ?? 'N/A';
+                String studentName = studentData['studentName'] ?? 'Student';
+                String rollNo = studentData['rollNumber']?.toString() ?? '';
+                
+                return StreamBuilder<QuerySnapshot>(
+                  stream: _firebaseService.getClassFeesStream(_parentData!['adminId'], className),
+                  builder: (context, feeSnapshot) {
+                    double baseFee = 0.0;
+                    double additionalCharge = 0.0;
+                    String dueDateStr = "N/A";
+                    
+                    if (feeSnapshot.hasData && feeSnapshot.data!.docs.isNotEmpty) {
+                      var feeData = feeSnapshot.data!.docs.first.data() as Map<String, dynamic>;
+                      baseFee = double.tryParse(feeData['baseFee']?.toString() ?? '0') ?? 0.0;
+                      additionalCharge = double.tryParse(feeData['additionalCharge']?.toString() ?? '0') ?? 0.0;
+                      if (feeData['dueDateRaw'] != null) {
+                        dueDateStr = DateFormat('MM/dd/yyyy').format((feeData['dueDateRaw'] as Timestamp).toDate());
+                      }
+                    }
+
+                    double arrearsBalance = double.tryParse(studentData['arrearsBalance']?.toString() ?? '0') ?? 0.0;
+                    double discountPercent = (studentData['siblingDiscountPercentage'] ?? 0).toDouble();
+                    
+                    double totalBeforeDiscount = baseFee + additionalCharge;
+                    double discountAmount = (totalBeforeDiscount * discountPercent) / 100;
+                    double currentMonthTotal = totalBeforeDiscount - discountAmount;
+
+                    bool isPaid = studentData['feeStatus']?.toString().toLowerCase() == 'paid';
+                    bool hasInstallments = studentData['hasInstallments'] ?? false;
+                    List installments = studentData['installments'] as List? ?? [];
+
+                    return CustomScrollView(
+                      slivers: [
+                        SliverAppBar(
+                          expandedHeight: 120,
+                          pinned: true,
+                          backgroundColor: primaryColor,
+                          elevation: 0,
+                          automaticallyImplyLeading: false,
+                          flexibleSpace: FlexibleSpaceBar(
+                            title: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  Translations.get('Fee Details', isUrdu),
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                Text(
+                                  '$studentName ($rollNo)',
+                                  style: const TextStyle(color: Colors.white70, fontSize: 11),
                                 ),
                               ],
                             ),
+                            centerTitle: false,
+                            titlePadding: const EdgeInsets.only(left: 20, bottom: 12),
+                          ),
+                        ),
+
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Row 1
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      Translations.get('Academic Year 2025', isUrdu),
-                                      style: TextStyle(color: Colors.grey[700], fontSize: 13, fontWeight: FontWeight.w500),
-                                    ),
-                                    Text(
-                                      Translations.get('Total Fee', isUrdu),
-                                      style: TextStyle(color: Colors.grey[700], fontSize: 13, fontWeight: FontWeight.w500),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 5),
-                                // Row 2
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      Translations.get('Class 10', isUrdu),
-                                      style: const TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
-                                    ),
-                                    const Text(
-                                      'Rs. 5,000',
-                                      style: TextStyle(color: Color(0xFF009BCB), fontSize: 18, fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
+                                _buildOverviewCard(className, currentMonthTotal, isPaid, isUrdu),
                                 
-                                // Row 3 (Current Month)
-                                Text(
-                                  Translations.get('Current Month', isUrdu),
-                                  style: const TextStyle(color: Color(0xFF009BCB), fontSize: 12, fontWeight: FontWeight.bold),
-                                ),
+                                const SizedBox(height: 25),
+
+                                if (arrearsBalance > 0) ...[
+                                  _buildArrearsCard(arrearsBalance, isUrdu),
+                                  const SizedBox(height: 25),
+                                ],
+
+                                if (!isPaid) ...[
+                                  _buildSectionHeader(Translations.get('Unpaid Fee', isUrdu)),
+                                  const SizedBox(height: 10),
+                                  _buildUnpaidFeeCard(
+                                    className, 
+                                    baseFee, 
+                                    additionalCharge, 
+                                    discountAmount, 
+                                    discountPercent,
+                                    currentMonthTotal, 
+                                    dueDateStr, 
+                                    hasInstallments,
+                                    installments,
+                                    isUrdu
+                                  ),
+                                  const SizedBox(height: 25),
+                                ],
+
+                                _buildSectionHeader(Translations.get('Payment History', isUrdu)),
                                 const SizedBox(height: 10),
+                                _buildPaymentHistory(studentData, isUrdu),
                                 
-                                // Row 4 (Amounts)
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            Translations.get('Paid Amount', isUrdu),
-                                            style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.w500),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          const Text(
-                                            'Rs. 2,500',
-                                            style: TextStyle(color: Colors.black87, fontSize: 15, fontWeight: FontWeight.bold),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            Translations.get('Remaining', isUrdu),
-                                            style: const TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.w500),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          const Text(
-                                            'Rs. 2,500',
-                                            style: TextStyle(color: Colors.black87, fontSize: 15, fontWeight: FontWeight.bold),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                
-                                const SizedBox(height: 20),
-                                
-                                // Progress Bar
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: LinearProgressIndicator(
-                                    value: 0.5,
-                                    backgroundColor: Colors.grey[200],
-                                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00D4FF)),
-                                    minHeight: 6,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                const Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Text(
-                                    '50 %',
-                                    style: TextStyle(fontSize: 12, color: Colors.black54, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
+                                const SizedBox(height: 100),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 20), // Padding to show cyan background curve perfectly
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Unpaid Fee Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          Translations.get('Unpaid Fee', isUrdu),
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-                        ),
-                        const SizedBox(height: 15),
-                        
-                        // Unpaid Item Card
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.06),
-                                blurRadius: 10,
-                                spreadRadius: 1,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    Translations.get('Class 10', isUrdu),
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-                                  ),
-                                  const Text(
-                                    'Rs. 2,500',
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.calendar_today, size: 14, color: Colors.grey[500]),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        '${Translations.get('Due:', isUrdu)} 1/15/2026',
-                                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                                      ),
-                                    ],
-                                  ),
-                                  _buildStatusBadge('Pending', Colors.deepOrange, const Color(0xFFFFF3E0), isUrdu),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              _buildInstallmentPill('Installment 2', isUrdu),
-                              const SizedBox(height: 20),
-                              
-                              // Upload button
-                              SizedBox(
-                                width: double.infinity,
-                                height: 45,
-                                child: ElevatedButton.icon(
-                                  onPressed: () => _showUploadDialog(context, isUrdu),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF00D4FF),
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    elevation: 0,
-                                  ),
-                                  icon: const Icon(Icons.file_upload_outlined, size: 20),
-                                  label: Text(
-                                    Translations.get('Upload Payment Proof', isUrdu),
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
                       ],
-                    ),
-                  ),
-
-                  // Payment History Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          Translations.get('Payment History', isUrdu),
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-                        ),
-                        const SizedBox(height: 15),
-                        
-                        // Payment History Item 1
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 15),
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.06),
-                                blurRadius: 10,
-                                spreadRadius: 1,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    Translations.get('Class 10', isUrdu),
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-                                  ),
-                                  const Text(
-                                    'Rs. 2,500',
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(Icons.calendar_today, size: 14, color: Colors.grey[500]),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    '${Translations.get('Due:', isUrdu)} 12/15/2025',
-                                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.attach_money, size: 16, color: Colors.green),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        '${Translations.get('Paid on:', isUrdu)} 12/10/2025',
-                                        style: const TextStyle(fontSize: 13, color: Colors.green, fontWeight: FontWeight.w500),
-                                      ),
-                                    ],
-                                  ),
-                                  _buildStatusBadge('Paid', Colors.green, const Color(0xFFE8F5E9), isUrdu),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              _buildInstallmentPill('Installment 1', isUrdu),
-                            ],
-                          ),
-                        ),
-                        
-                        // Payment History Item 2
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 25),
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.06),
-                                blurRadius: 10,
-                                spreadRadius: 1,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    Translations.get('Class 10', isUrdu),
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-                                  ),
-                                  const Text(
-                                    'Rs. 5,000',
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(Icons.calendar_today, size: 14, color: Colors.grey[500]),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    '${Translations.get('Due:', isUrdu)} 11/15/2025',
-                                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.attach_money, size: 16, color: Colors.green),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        '${Translations.get('Paid on:', isUrdu)} 11/09/2025',
-                                        style: const TextStyle(fontSize: 13, color: Colors.green, fontWeight: FontWeight.w500),
-                                      ),
-                                    ],
-                                  ),
-                                  _buildStatusBadge('Paid', Colors.green, const Color(0xFFE8F5E9), isUrdu),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            bottomNavigationBar: BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              currentIndex: 1, // Fees is 1
-              selectedItemColor: const Color(0xFF00D4FF),
-              unselectedItemColor: Colors.grey,
-              selectedFontSize: 12,
-              unselectedFontSize: 12,
-              iconSize: 26,
-              onTap: (index) {
-                if (index == 0) {
-                  navigateWithLoader(context, () {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ParentDashboardScreen()));
-                  });
-                } else if (index == 2) {
-                  navigateWithLoader(context, () {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ParentVoucherScreen()));
-                  });
-                } else if (index == 3) {
-                  navigateWithLoader(context, () {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ParentAlertsScreen()));
-                  });
-                } else if (index == 4) {
-                  navigateWithLoader(context, () {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ParentProfileScreen()));
-                  });
-                }
+                    );
+                  },
+                );
               },
-              items: [
-                BottomNavigationBarItem(icon: const Icon(Icons.home_outlined), label: Translations.get('Home', isUrdu)),
-                BottomNavigationBarItem(icon: const Icon(Icons.calendar_today), label: Translations.get('Fees', isUrdu)),
-                BottomNavigationBarItem(icon: const Icon(Icons.receipt_long_outlined), label: Translations.get('Voucher', isUrdu)),
-                BottomNavigationBarItem(icon: const Icon(Icons.notifications_none_outlined), label: Translations.get('Alerts', isUrdu)),
-                BottomNavigationBarItem(icon: const Icon(Icons.person_outline), label: Translations.get('Profile', isUrdu)),
-              ],
             ),
+            bottomNavigationBar: _buildBottomNav(isUrdu),
           ),
         );
       },
     );
   }
-}
 
-class DashedRectPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-  final double gap;
-
-  DashedRectPainter({
-    this.color = Colors.grey,
-    this.strokeWidth = 1.0,
-    this.gap = 5.0,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    var path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-          Rect.fromLTWH(0, 0, size.width, size.height),
-          const Radius.circular(20))); // Radius matching internal rounding
-
-    Path dashPath = Path();
-    double distance = 0.0;
-    for (PathMetric pathMetric in path.computeMetrics()) {
-      while (distance < pathMetric.length) {
-        dashPath.addPath(
-          pathMetric.extractPath(distance, distance + gap),
-          Offset.zero,
-        );
-        distance += gap * 2.5; // Controls dashed gap empty space
-      }
-      distance = 0.0;
-    }
-    
-    canvas.drawPath(dashPath, paint);
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+    );
   }
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+  Widget _buildOverviewCard(String className, double total, bool isPaid, bool isUrdu) {
+    double paidAmount = isPaid ? total : 0.0;
+    double remaining = isPaid ? 0.0 : total;
+    double progress = isPaid ? 1.0 : 0.0;
+    String monthLabel = "${DateFormat('MMMM').format(DateTime.now())} ${Translations.get('Month', isUrdu)}";
 
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 5)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Academic Year 2025', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              Text(
+                'Total Fee',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                className,
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+              Text(
+                'Rs. ${total.toInt()}',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          Text(
+            monthLabel,
+            style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildProgressInfo('Paid Amount', 'Rs. ${paidAmount.toInt()}', isUrdu),
+              _buildProgressInfo('Remaining', 'Rs. ${remaining.toInt()}', isUrdu, isOrange: true),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(secondaryColor),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              '${(progress * 100).toInt()}%',
+              style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressInfo(String label, String amount, bool isUrdu, {bool isOrange = false}) {
+    return Column(
+      crossAxisAlignment: isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(Translations.get(label, isUrdu), style: TextStyle(color: isOrange ? Colors.orange : Colors.green, fontSize: 12, fontWeight: FontWeight.w500)),
+        Text(amount, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+      ],
+    );
+  }
+
+  Widget _buildArrearsCard(double amount, bool isUrdu) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.red[50],
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.red[100]!),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(Translations.get('Past Arrears', isUrdu), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                Text('Rs. ${amount.toInt()}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnpaidFeeCard(
+    String className, 
+    double base, 
+    double additional, 
+    double discount, 
+    double discountPercent,
+    double total, 
+    String dueDate, 
+    bool hasInstallments,
+    List installments,
+    bool isUrdu
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(className, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('Rs. ${total.toInt()}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+              const SizedBox(width: 5),
+              Text('Due: $dueDate', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+              const Spacer(),
+              _buildBadge('Pending', Colors.orange),
+            ],
+          ),
+          const SizedBox(height: 15),
+          const Divider(),
+          const SizedBox(height: 10),
+          _buildDetailRow('Base Fee', 'Rs. ${base.toInt()}', isUrdu),
+          _buildDetailRow('Additional Charges', 'Rs. ${additional.toInt()}', isUrdu),
+          _buildDetailRow('Sibling Discount (${discountPercent.toInt()}%)', '- Rs. ${discount.toInt()}', isUrdu, isNegative: true),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0),
+            child: Divider(),
+          ),
+          _buildDetailRow('Total Monthly Fee', 'Rs. ${total.toInt()}', isUrdu, isBold: true),
+          
+          if (hasInstallments && installments.isNotEmpty) ...[
+            const SizedBox(height: 15),
+            Row(
+              children: [
+                _buildInstallmentBadge(installments[0]['label'] ?? 'Installment'),
+              ],
+            ),
+          ],
+          
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: () => _showUploadDialog(context, isUrdu),
+              icon: const Icon(Icons.file_upload_outlined, color: Colors.white),
+              label: Text(Translations.get('Upload Payment Proof', isUrdu)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, bool isUrdu, {bool isNegative = false, bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(Translations.get(label, isUrdu), style: TextStyle(color: isBold ? Colors.black87 : Colors.grey[700], fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
+          Text(value, style: TextStyle(color: isNegative ? Colors.red : (isBold ? primaryColor : Colors.black87), fontWeight: isBold ? FontWeight.bold : FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentHistory(Map<String, dynamic> studentData, bool isUrdu) {
+    if (studentData['feeStatus']?.toString().toLowerCase() != 'paid') {
+      return Center(child: Text(Translations.get('No payment history yet.', isUrdu), style: const TextStyle(color: Colors.grey)));
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(studentData['class']?.toString() ?? 'N/A', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('Rs. ${studentData['lastFeeAmount'] ?? '0'}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.check_circle, size: 14, color: Colors.green),
+              const SizedBox(width: 5),
+              const Text('Paid on: Recently', style: TextStyle(color: Colors.green, fontSize: 13, fontWeight: FontWeight.w600)),
+              const Spacer(),
+              _buildBadge('Paid', Colors.green),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+      child: Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildInstallmentBadge(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+      child: Text(text, style: TextStyle(color: primaryColor, fontSize: 10, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildBottomNav(bool isUrdu) {
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      currentIndex: 1,
+      selectedItemColor: primaryColor,
+      unselectedItemColor: Colors.grey,
+      selectedFontSize: 12,
+      unselectedFontSize: 12,
+      iconSize: 26,
+      onTap: (index) {
+        if (index == 0) {
+          navigateWithLoader(context, () {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ParentDashboardScreen()));
+          });
+        } else if (index == 2) {
+          navigateWithLoader(context, () {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ParentVoucherScreen()));
+          });
+        } else if (index == 3) {
+          navigateWithLoader(context, () {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ParentAlertsScreen()));
+          });
+        } else if (index == 4) {
+          navigateWithLoader(context, () {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ParentProfileScreen()));
+          });
+        }
+      },
+      items: [
+        BottomNavigationBarItem(icon: const Icon(Icons.home_outlined), label: Translations.get('Home', isUrdu)),
+        BottomNavigationBarItem(icon: const Icon(Icons.calendar_today), label: Translations.get('Fees', isUrdu)),
+        BottomNavigationBarItem(icon: const Icon(Icons.receipt_long_outlined), label: Translations.get('Voucher', isUrdu)),
+        BottomNavigationBarItem(icon: const Icon(Icons.notifications_none_outlined), label: Translations.get('Alerts', isUrdu)),
+        BottomNavigationBarItem(icon: const Icon(Icons.person_outline), label: Translations.get('Profile', isUrdu)),
+      ],
+    );
+  }
+}

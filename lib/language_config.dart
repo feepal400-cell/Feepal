@@ -23,6 +23,38 @@ class Translations {
       true: 'اسکول کی ادائیگیوں کو آسانی سے منظم کریں',
     },
     'Login': {false: 'Login', true: 'لاگ ان'},
+    'School Address': {false: 'School Address', true: 'اسکول کا پتہ'},
+    'Branches': {false: 'Branches', true: 'برانچز'},
+    'Add Branch': {false: 'Add Branch', true: 'برانچ شامل کریں'},
+    'Branch Name': {false: 'Branch Name', true: 'برانچ کا نام'},
+    'Branch Address': {false: 'Branch Address', true: 'برانچ کا پتہ'},
+    'Branch Code': {false: 'Branch Code', true: 'برانچ کوڈ'},
+    'School Logo': {false: 'School Logo', true: 'اسکول کا لوگو'},
+    'Upload School Logo': {false: 'Upload School Logo', true: 'اسکول کا لوگو اپ لوڈ کریں'},
+    'Please add at least one branch.': {
+      false: 'Please add at least one branch.',
+      true: 'براہ کرم کم از کم ایک برانچ شامل کریں۔',
+    },
+    'Duplicate branch codes not allowed.': {
+      false: 'Duplicate branch codes not allowed.',
+      true: 'ڈپلیکیٹ برانچ کوڈز کی اجازت نہیں ہے۔',
+    },
+    'Invalid phone number format. Must start with +92.': {
+      false: 'Invalid phone number format. Must start with +92.',
+      true: 'فون نمبر کا فارمیٹ غلط ہے۔ +92 سے شروع ہونا چاہیے۔',
+    },
+    'School Information': {false: 'School Information', true: 'اسکول کی معلومات'},
+    'Admin Information': {false: 'Admin Information', true: 'ایڈمن کی معلومات'},
+    'Please upload school logo.': {
+      false: 'Please upload school logo.',
+      true: 'براہ کرم اسکول کا لوگو اپ لوڈ کریں۔',
+    },
+    'Enter school address': {false: 'Enter school address', true: 'اسکول کا پتہ درج کریں'},
+    'Processing...': {false: 'Processing...', true: 'پروسیسنگ...'},
+    'Logo uploaded successfully': {
+      false: 'Logo uploaded successfully',
+      true: 'لوگو کامیابی کے ساتھ اپ لوڈ ہو گیا!',
+    },
     'Sign Up': {false: 'Sign Up', true: 'سائن اپ'},
     'Switch to Urdu | اردو': {
       false: 'Switch to Urdu | اردو',
@@ -45,6 +77,35 @@ class Translations {
       true: 'کیا آپ کا اکاؤنٹ نہیں ہے؟ ',
     },
     'Sign up': {false: 'Sign up', true: 'سائن اپ کریں'},
+
+    // Notifications
+    'Important': {false: 'Important', true: 'اہم'},
+    'New Fee Issued': {false: 'New Fee Issued', true: 'نئی فیس جاری کر دی گئی'},
+    'A new monthly fee has been created.': {
+      false: 'A new monthly fee has been created.',
+      true: 'ایک نئی ماہانہ فیس تیار کی گئی ہے۔',
+    },
+    'Due date': {false: 'Due date', true: 'آخری تاریخ'},
+    'SMS Alert': {false: 'SMS Alert', true: 'ایس ایم ایس الرٹ'},
+    'Email Alert': {false: 'Email Alert', true: 'ای میل الرٹ'},
+    'App Notifications': {false: 'App Notifications', true: 'ایپ نوٹیفیکیشنز'},
+    'Mandatory': {false: 'Mandatory', true: 'لازمی'},
+    'Select notification channels': {
+      false: 'Select notification channels',
+      true: 'نوٹیفیکیشن چینلز منتخب کریں',
+    },
+    'Downloading voucher...': {
+      false: 'Downloading voucher...',
+      true: 'واؤچر ڈاؤن لوڈ ہو رہا ہے...',
+    },
+    'Downloading...': {
+      false: 'Downloading...',
+      true: 'ڈاؤن لوڈ ہو رہا ہے...',
+    },
+    'Download Voucher': {
+      false: 'Download Voucher',
+      true: 'واؤچر ڈاؤن لوڈ کریں',
+    },
 
     // Sign Up Screen
     'School Name': {false: 'School Name', true: 'اسکول کا نام'},
@@ -203,9 +264,84 @@ class Translations {
     'Create Fee': {false: 'Create Fee', true: 'فیس بنائیں'},
     'Send Reminder': {false: 'Send Reminder', true: 'یاد دہانی بھیجیں'},
     'Recent Activity': {false: 'Recent Activity', true: 'حالیہ سرگرمی'},
+    'Activity History': {false: 'Activity History', true: 'سرگرمی کی تاریخ'},
+    'View All': {false: 'View All', true: 'سب دیکھیں'},
+    'No activity history found': {false: 'No activity history found', true: 'کوئی سرگرمی نہیں ملی'},
+    'Arrears Relief (2 Installments)': {
+      false: 'Arrears Relief (2 Installments)',
+      true: 'بقایا جات میں ریلیف (2 اقساط)',
+    },
+    'Split into 2 installments': {
+      false: 'Split into 2 installments',
+      true: '2 اقساط میں تقسیم کریں',
+    },
+    'Arrears over Rs. 5000 can be split': {
+      false: 'Arrears over Rs. 5000 can be split',
+      true: '5000 روپے سے زیادہ کے بقایا جات کو تقسیم کیا جا سکتا ہے',
+    },
+    'Reset Installments': {
+      false: 'Reset Installments',
+      true: 'اقساط کو ری سیٹ کریں',
+    },
+    'Arrears Installment': {
+      false: 'Arrears Installment',
+      true: 'بقایا جات کی قسط',
+    },
+    'Installment': {
+      false: 'Installment',
+      true: 'قسط',
+    },
     'Payment received from Ahmed Khan': {
       false: 'Payment received from Ahmed Khan',
       true: 'احمد خان سے ادائیگی موصول ہوئی',
+    },
+    'Subscription': {
+      false: 'Subscription',
+      true: 'سبسکرپشن',
+    },
+    'Verification in Progress': {
+      false: 'Verification in Progress',
+      true: 'تصدیق جاری ہے',
+    },
+    'FeePal Team is verifying your payment. This usually takes less than 24 hours.': {
+      false: 'FeePal Team is verifying your payment. This usually takes less than 24 hours.',
+      true: 'فی پال ٹیم آپ کی ادائیگی کی تصدیق کر رہی ہے۔ اس میں عام طور پر 24 گھنٹے سے بھی کم وقت لگتا ہے۔',
+    },
+    'Choose Your Plan': {
+      false: 'Choose Your Plan',
+      true: 'اپنا پلان منتخب کریں',
+    },
+    'Upload Payment Proof': {
+      false: 'Upload Payment Proof',
+      true: 'ادائیگی کا ثبوت اپ لوڈ کریں',
+    },
+    'Submit Proof': {
+      false: 'Submit Proof',
+      true: 'ثبوت جمع کروائیں',
+    },
+    'Congratulations!': {
+      false: 'Congratulations!',
+      true: 'مبارک ہو!',
+    },
+    'Your subscription has been successfully enabled by FeePal Team.': {
+      false: 'Your subscription has been successfully enabled by FeePal Team.',
+      true: 'آپ کی سبسکرپشن فی پال ٹیم کی طرف سے کامیابی کے ساتھ فعال کر دی گئی ہے۔',
+    },
+    'Make sure to update your bank details and school profile.': {
+      false: 'Make sure to update your bank details and school profile.',
+      true: 'یقینی بنائیں کہ آپ اپنے بینک کی تفصیلات اور اسکول پروفائل کو اپ ڈیٹ کرتے ہیں۔',
+    },
+    'Get Started': {
+      false: 'Get Started',
+      true: 'شروع کریں',
+    },
+    'Purchase Request sent successfully to FeePal Team. They will verify and enable subscription within 24 hours.': {
+      false: 'Purchase Request sent successfully to FeePal Team. They will verify and enable subscription within 24 hours.',
+      true: 'خریداری کی درخواست فی پال ٹیم کو کامیابی کے ساتھ بھیج دی گئی ہے۔ وہ 24 گھنٹوں کے اندر سبسکرپشن کی تصدیق اور اسے فعال کر دیں گے۔',
+    },
+    'Please select a plan and upload payment proof.': {
+      false: 'Please select a plan and upload payment proof.',
+      true: 'براہ کرم پلان منتخب کریں اور ادائیگی کا ثبوت اپ لوڈ کریں۔',
     },
     'New student added: Sara Ali': {
       false: 'New student added: Sara Ali',
@@ -294,10 +430,8 @@ class Translations {
     'Installment 1': {false: 'Installment 1', true: 'پہلی قسط'},
     'Installment 2': {false: 'Installment 2', true: 'دوسری قسط'},
     'Pending': {false: 'Pending', true: 'زیر التواء'},
-    'Upload Payment Proof': {
-      false: 'Upload Payment Proof',
-      true: 'ادائیگی کا ثبوت اپ لوڈ کریں',
-    },
+    'No unpaid dues': {false: 'No unpaid dues', true: 'کوئی واجب الادا رقم نہیں ہے'},
+    'Current Due': {false: 'Current Due', true: 'موجودہ واجب الادا'},
     'Payment History': {false: 'Payment History', true: 'ادائیگی کی تاریخ'},
     'Paid on:': {false: 'Paid on:', true: 'ادائیگی کی تاریخ:'},
 
@@ -404,6 +538,11 @@ class Translations {
     'Help & Support': {false: 'Help & Support', true: 'مدد اور تعاون'},
     'FAQ': {false: 'FAQ', true: 'اکثر پوچھے گئے سوالات'},
     'Contact Support': {false: 'Contact Support', true: 'سپورٹ سے رابطہ کریں'},
+    'Upload Proof': {false: 'Upload Proof', true: 'ثبوت اپ لوڈ کریں'},
+    'Fee': {false: 'Fee', true: 'فیس'},
+    'Processing payment proof...': {false: 'Processing payment proof...', true: 'ادائیگی کے ثبوت پر کارروائی ہو رہی ہے...'},
+    'AI is validating your voucher...': {false: 'AI is validating your voucher...', true: 'مصنوعی ذہانت آپ کے واؤچر کی تصدیق کر رہی ہے...'},
+    'Voucher validated! Fee marked as Paid.': {false: 'Voucher validated! Fee marked as Paid.', true: 'واؤچر کی تصدیق ہوگئی! فیس ادا شدہ نشان زد کر دی گئی۔'},
     'Terms & Conditions': {false: 'Terms & Conditions', true: 'شرائط و ضوابط'},
   };
 
