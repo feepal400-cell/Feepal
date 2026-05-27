@@ -1,0 +1,22 @@
+# FeePal v1.0.3 Changelog
+
+## UI & UX Enhancements
+- **Parent Dashboard Refined**: Streamlined the user interface by removing redundant student profile cards for a cleaner look.
+- **System Navigation**: Implemented a consistent white system navigation bar with dark icons across all screens.
+- **Double-Back-to-Exit**: Added a security feature requiring a double back-press to exit the app, preventing accidental closures.
+
+## Notification & Communication System
+- **Automated Fee Issuance Emails**: Parents now receive professional email alerts immediately when a new fee voucher is generated.
+- **Mandatory App Notifications**: Ensured all parents receive critical updates via mandatory in-app notifications.
+- **Default Email Alerts**: Set email alerts to be enabled by default for all parent profiles to ensure they never miss a payment deadline.
+- **Automated Reminder Engine**: Implemented a smart reminder system that automatically dispatches email alerts every 5 days for unpaid dues.
+- **Overdue Priority Alerts**: System now automatically flags overdue fees and sends priority email reminders with student details and late fee amounts.
+
+## Admin & Subscription Management
+- **Subscription Approval Emails**: New school admins now receive "Congratulations" emails immediately upon subscription approval.
+- **Subscription Denial Alerts**: Integrated professional email and push notifications for denied subscription requests with clear next steps.
+- **Automated Reminder Trigger**: Admin dashboard now automatically initiates the background reminder engine on login.
+
+## Stability & Bug Fixes
+- Resolved syntax errors in navigation logic and improved state management for better performance.
+- Fixed an issue where system UI colors were inconsistent on some devices.

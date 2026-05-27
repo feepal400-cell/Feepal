@@ -1,0 +1,50 @@
+==================================================
+FeePal - Version 1.0.8 Changelog
+Release Date: May 14, 2026
+==================================================
+
+🚀 NEW FEATURES & INTEGRATIONS
+
+1. SMS Alert Integration
+   - Implemented automated SMS alerts for fee generation.
+   - SMS is exclusively sent to parents who have opted for "SMS Alerts" in their preferences.
+   - Uses professional SMS templates for both new vouchers and overdue notifications.
+
+2. Enhanced Automated Reminder Engine
+   - Intelligent scheduling for parent reminders:
+     * Standard Parents: Reminders every 7 days.
+     * Priority Parents: Reminders every 5 days.
+   - Reminders now automatically include Due Date and Installment availability details.
+
+3. Administrative Controls (Student Management)
+   - Added "SMS Alert" toggle in the Student Profile sheet.
+   - Admins can now manually override notification preferences for parents who do not use the app, ensuring 100% reach.
+
+4. "About Us" Section
+   - Integrated a professional "About Us" page in both Admin and Parent profiles.
+   - Provides an introduction to FeePal and easy-to-access contact details for support.
+
+🎨 UI/UX & STABILITY IMPROVEMENTS
+
+5. Dashboard & Fee Detailing
+   - Enhanced the Class Fee Cards to show both "Month Issued" and "Due Date" at a glance.
+   - Added bold visual indicators for overdue status.
+
+6. Global System Navigation Fix
+   - Enforced a consistent Light Theme for system navigation bars (Back/Home/Recent) across all Android devices.
+   - Fixed visibility issues where navigation buttons were white-on-white.
+
+7. Notification Aesthetics
+   - Redesigned in-app and push notification text to be more professional and informative.
+   - Included due dates directly in notification bodies for immediate clarity.
+
+🔧 BUG FIXES & OPTIMIZATIONS
+
+- Resolved "Ghost Voucher" inflation in Admin Dashboard metrics.
+- Optimized database streams to ensure student counts reflect unique active enrollment.
+- Fixed late fee penalty logic to strictly apply after the due date passes.
+- General performance improvements in Firebase data fetching.
+
+==================================================
+FeePal: Making school management effortless.
+==================================================

@@ -1,0 +1,13 @@
+Version 1.0.11
+
+- Chat Support For Admin/Parent: Admin and parent can now chat with each other through a real-time, persistent in-app messaging system.
+- Template Update: Removed the due date selection logic from the next month fee template to allow automatic month-to-month date forwarding.
+- Subscription Logic Fixed: If an admin account is disabled or expired, they can log in but are force-routed to the subscription renewal screen (this does not delete any of their existing school data).
+- Installment Display Fixed: The second installment now properly appears on the parent portal's Fees screen with its actual individual amount.
+- Payment Proof Review: Admins can now view uploaded payment proof images directly within the student fee screen and manually toggle the voucher status.
+- Admin Fee Display Fixed: The admin fees management screen now correctly shows the combined total of base fee + additional charges instead of only displaying the base fee.
+- Admin Change Password Refactored: Admin security has been upgraded to require identity verification via Email OTP first, followed by a current password re-authentication layer before setting a new password.
+- Bank Validation Fixed: Implemented strict data validation according to the standard Pakistani bank format (24-character IBAN layout) in the Bank Details profile screen.
+- Refactored Forgot Password Screen: Admin will reset password through reset link on their email and parent will reset through text fields.
+- Removed FAQ option from both portals.
+- Added "Extend Subscription" option in superadmin to extend the subscription limit for any admin.

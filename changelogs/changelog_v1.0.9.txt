@@ -1,0 +1,31 @@
+FeePal v1.0.9 Changelog
+=======================
+Release Date: May 15, 2026
+
+[Reminder]
+- Added selection menu in fee reminder screen in Admin Portal.
+- Admins can now send reminders to all parents or select specific parents.
+
+[Fee Alert]
+- Revamped Fee Alert message system.
+- In-app notifications and emails now provide more detailed information regarding student name and specific dues.
+
+[Due Date]
+- Fixed a bug in the due date selector.
+- Past dates are now strictly prohibited from selection to ensure data integrity.
+
+[Fee Alert Tab]
+- Added a dedicated Fee Alert tab for parents.
+- Parents can now see historical logs of when fees were created and issued by the school administration.
+
+[SMS Integration]
+- SMS Integration is now fully operational.
+- Smart routing: Parents with SMS Alerts preference will receive only SMS notifications to avoid redundancy.
+
+[Email Integration]
+- Email alerts system optimized.
+- Automated emails are sent specifically to parents who have enabled Email Alerts in their preferences.
+
+[UI Refinements]
+- Parent Dashboard: The student fee summary card now displays "Annual Year Status" for a more comprehensive overview.
+- Fixed layout issues and improved localization for both English and Urdu.

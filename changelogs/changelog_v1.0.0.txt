@@ -1,0 +1,53 @@
+FeePal Project - Changelog v1.0.0
+=================================
+
+Initial Release and Core Infrastructure
+---------------------------------------
+
+Summary of Work Done So Far:
+
+1.  Framework & Infrastructure:
+    *   Set up Flutter environment with Dart for cross-platform mobile development.
+    *   Integrated Firebase Core, Auth, Firestore, Messaging, and Storage.
+    *   Configured offline persistence and cache settings for Firestore.
+
+2.  Authentication & Session Management:
+    *   Implemented Admin signup and login flows with email/password.
+    *   Implemented Parent login using Email or Phone Number.
+    *   Added session persistence and auto-login logic.
+    *   Secure logout flow for both Admins and Parents.
+
+3.  School Management (Admin):
+    *   Admin Dashboard with real-time statistics (Total Students, Unpaid Fees, Activities).
+    *   Student Management: Add, Update, Delete, and Batch Import (Excel) students.
+    *   Class-based fee management: Created Monthly Fee Templates.
+    *   Automated voucher generation for students based on class templates.
+    *   Manual and Priority fee reminders with last-alert tracking.
+    *   Activity logs for tracking admin operations.
+
+4.  Parent Portal:
+    *   Parent Dashboard with student profile overview.
+    *   Sibling Management: Master dashboard for parents with multiple children.
+    *   Fee History & Voucher Download system.
+    *   Payment Proof Upload: Parents can upload receipts to mark fees as paid.
+    *   OCR Integration: AI-powered validation of payment receipts using Google ML Kit.
+
+5.  Notifications & Alerts:
+    *   Firebase Cloud Messaging (FCM) integration for push notifications.
+    *   Subscription to class-specific topics for announcements.
+    *   Flutter Local Notifications for high-importance alerts.
+    *   SMS Gateway integration (planned/initial logic) for offline reminders.
+
+6.  Subscription System:
+    *   Tiered plans (Monthly/Yearly) for schools.
+    *   Proof-of-payment submission for school subscriptions.
+    *   Super Admin approval workflow for school activation.
+
+7.  UI/UX & Aesthetics:
+    *   Modern, clean design with cyan and teal color palette.
+    *   Responsive layouts for different screen sizes.
+    *   Multilingual support (English/Urdu) with real-time language switching.
+    *   Glassmorphism and gradient effects for a premium feel.
+
+8.  Documentation:
+    *   Created `feepal_project_guideline.txt` as a detailed technical and non-technical guide.

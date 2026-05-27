@@ -1,0 +1,5 @@
+v1.0.13 Changelogs
+------------------
+1) Integrated FeePal Website with the FeePal App.
+2) The subscription and resubscription methods work properly
+3) Implemented OCR Verification System.

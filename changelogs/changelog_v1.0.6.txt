@@ -1,0 +1,15 @@
+FeePal v1.0.6 - Changelog
+
+Features & Improvements:
+- [Fee Management] Integrated a new 'Fee Management' tab within the Student Profile sheet. Admins can now manually override voucher statuses (Paid/Unpaid) for manual payments.
+- [Notifications] Enhanced notification system with automated "In-App Alerts" in Firestore for both parents and admins whenever a fee status is updated.
+- [Stability] Implemented dead FCM token cleanup. Stale or unregistered tokens are now automatically removed from Firestore to ensure notification reliability.
+- [Voucher PDF] Fixed the voucher generation logic to include 3 copies (Bank, School, Student) on a single A4 page with signable spaces.
+- [Navigation] Configured push notification tap-to-route. Tapping a fee notification now takes the user directly to their respective Alerts screen.
+
+Bug Fixes:
+- Fixed the Roll Number duplication issue where multiple students could have the same roll number.
+- Fixed a calculation bug in the Parent Fee Details screen where future month dues were being aggregated into the current month's summary.
+- Fixed a date formatting year bug in the Payment History section.
+- Added a back button in the OTP screen to allow users to return to the signup screen and correct information.
+- Overhauled and updated the Fee Details screen theme to align with the premium parent portal design.

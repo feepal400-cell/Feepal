@@ -1,0 +1,18 @@
+FeePal v1.0.4 Changelog
+====================
+
+What's New?:
+- [Fix] Parent Dashboard UI: Resolved student information duplication for a cleaner experience.
+- [Fix] Installment Management: Corrected installment due date tracking logic to ensure accurate scheduling.
+- [Feature] Mass Payment Reminders: Implemented Auto and Manual payment reminders capable of handling 100+ parents simultaneously.
+- [Feature] Data Imports: Enhanced Excel sheet imports to process and sync actual production data.
+- [Removal] Sibling Discount System: Removed the legacy sibling discount system to resolve major bugs in the class fee calculation engine.
+- [Feature] Admin Support: Introduced 'Contact Support' for school admins, enabling direct chat with the Super Admin.
+- [Feature] Enhanced Admin Profiles: Profiles now display school logos, addresses, and are fully editable.
+- [Fix] Password Recovery: Fixed the Email OTP system for password changes, now fully operational for both Admin and Parent portals.
+- [Feature] FAQ: Added a placeholder for the upcoming FAQ section.
+
+Stability & Performance:
+- Optimized Firebase messaging dispatch for high-volume notification bursts.
+- Refined profile update synchronization across local and remote sessions.
+- Improved network resilience in the login and authentication flow.

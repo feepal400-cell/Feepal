@@ -1,0 +1,49 @@
+FeePal v1.0.5 - Release Notes
+=======================================
+
+We are excited to announce the release of v1.0.5! This update focuses on critical security enhancements, document generation reliability, and refined user preferences for both administrators and parents.
+
+What's New?
+-----------
+1) Forgot Password Fixed:
+   - Optimized the OTP verification and password reset flow.
+   - Fixed the "Border not defined" issues in the reset interface.
+   - Everything is now working perfectly for account recovery.
+
+2) Dynamic Voucher Generation:
+   - Full implementation of the 3-part PDF voucher system.
+   - Supports both Standard and Installment-based vouchers.
+   - High-quality school logo integration and automatic bank details population.
+
+3) Enhanced Student Management UI:
+   - Replaced generic "Active" status with real-time financial tracking.
+   - Now displays "PAID" (Green) or "UNPAID" (Red) directly in the student list for immediate insight.
+
+4) Robust Support Chat:
+   - Finalized the Super Admin and Admin communication pipeline.
+   - Resolved authorization and message storage issues.
+   - Support requests can now be handled with professional continuity.
+
+5) Installment Confirmation Security:
+   - Added a protective dialog for parents when splitting fees.
+   - Mandatory note: "Installments once made cannot be reverted."
+   - Prevents accidental changes to financial structures.
+
+6) Admin Notification Safety:
+   - Added a confirmation dialog when disabling push notifications.
+   - Included warning: "If you toggle the notifications to OFF you won't be able to receive push notifications."
+
+7) Parent Notification Preferences:
+   - Implemented exclusive choice between SMS and Email alerts.
+   - Ensures parents always have exactly one verified communication channel active for reminders.
+
+Technical Improvements
+----------------------
+- Fixed layout overflows in system confirmation dialogs.
+- Synchronized parent portal theme with the Teal-Blue palette.
+- Enhanced card geometry to 30px radius for a premium look.
+- Enforced uniform height for dashboard stat cards.
+
+Thank you for using FeePal!
+---------------------------
+Your feedback helps us make school management effortless.

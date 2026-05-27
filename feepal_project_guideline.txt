@@ -1,0 +1,125 @@
+================================================================================
+                               FEEPAL PROJECT GUIDELINE
+================================================================================
+
+This document provides a detailed explanation of the FeePal project, its 
+architecture, and its features in simple English for non-technical people.
+
+--------------------------------------------------------------------------------
+1. CORE TECHNOLOGIES
+--------------------------------------------------------------------------------
+
+WHAT IS FLUTTER?
+Flutter is a tool created by Google that allows developers to build beautiful 
+apps for Android and iPhones using a single set of code. Instead of writing 
+two different apps for different phones, we write one app that works on both.
+
+WHAT IS DART?
+Dart is the programming language used by Flutter. Think of Flutter as the 
+building materials (bricks, windows, paint) and Dart as the instructions 
+on how to put them together.
+
+HOW FLUTTER WORKS:
+Flutter works like a professional painter. It "paints" every button, text, 
+and image on the screen very quickly (60 times per second), making the app 
+feel very smooth and fast.
+
+WHAT IS FIREBASE?
+Firebase is a "Backend as a Service" from Google. Imagine a house where 
+Flutter is the beautiful interior and exterior design, and Firebase is the 
+foundation, plumbing, and electricity that runs behind the walls.
+
+WHY FIREBASE IS THE BEST OPTION:
+1. Speed: It allows us to build features very quickly.
+2. Real-time: Changes show up instantly across all devices.
+3. Security: It has built-in systems to keep user data safe.
+4. Scale: It can handle 10 users or 10 million users without crashing.
+
+--------------------------------------------------------------------------------
+2. DATA AND DATABASE (FIRESTORE)
+--------------------------------------------------------------------------------
+
+WHAT IS FIRESTORE?
+Firestore is the database where we store all our project information (student 
+names, fee records, school details).
+
+COLLECTIONS AND DOCUMENTS:
+- Collections: Think of these as folders in a filing cabinet (e.g., "Students").
+- Documents: These are the individual files inside the folder (e.g., "John Doe's 
+  Info"). Each document contains specific details like name, roll number, 
+  and class.
+
+FIRESTORE RULES:
+These are the "security guards" of our data. They ensure that a parent can 
+only see their own child's data and not someone else's, and that only 
+authorized school admins can change fee records.
+
+--------------------------------------------------------------------------------
+3. PUSH NOTIFICATIONS (FCM)
+--------------------------------------------------------------------------------
+
+WHAT IS FCM?
+FCM stands for Firebase Cloud Messaging. It is the postman that delivers 
+messages (notifications) from our system to the user's phone.
+
+HOW IT WORKS:
+When an admin sends a fee reminder, the app tells FCM to deliver a message 
+to a specific phone.
+
+FCM TOKENS:
+An FCM Token is like a unique digital address for each phone. When you install 
+the app, your phone gets a "token" and gives it to our database. When we want 
+to send you a notification, we tell FCM to send it to your specific token.
+
+--------------------------------------------------------------------------------
+4. KEY PROJECT FEATURES
+--------------------------------------------------------------------------------
+
+FEE MANAGEMENT & STRUCTURE:
+Admins create a "Fee Template" for each class (e.g., Class 5 monthly fee = 5000). 
+The system then automatically generates a "Voucher" for every student in 
+that class. This saves the school from manually creating thousands of records.
+
+CORE RELATIONSHIPS:
+- Super Admins: The owners of the FeePal platform who manage the schools.
+- Admins (Schools): They manage their own students, and fees.
+- Students: They belong to a school and are linked to their parents.
+- Parents: They use the app to track their children's fees and pay them.
+
+AI OCR VERIFICATION (GOOGLE ML KIT):
+When a parent pays a fee and uploads a photo of the receipt (voucher proof), 
+the app uses Google ML Kit (an Artificial Intelligence tool). It "reads" the 
+text on the receipt to verify the amount and date automatically. This prevents 
+fake receipts and saves the admin from manual checking.
+
+CLOUDINARY:
+Cloudinary is a service we use to store and manage images. When a school 
+uploads a logo or a parent uploads a receipt, it is stored securely on 
+Cloudinary's servers and served to the app whenever needed.
+
+SMS GATEWAY:
+For parents who might not have internet or the app installed, admins can 
+subscribe to SMS plans. The system uses a local SMS Gateway API to send 
+automated text messages directly to the parent's phone number as a reminder.
+
+SUBSCRIPTION PLANS:
+Schools (Admins) choose between Monthly or Yearly plans to use FeePal. 
+They pay the FeePal team, upload the proof of payment, and once the 
+Super Admin verifies it, their account is activated.
+
+--------------------------------------------------------------------------------
+5. PROJECT PURPOSE SUMMARY
+--------------------------------------------------------------------------------
+
+FeePal is a fee reminder and payment tracking application designed to bridge 
+the gap between schools and parents. Its primary goals are:
+1. To automate the tedious process of fee generation.
+2. To ensure parents never miss a payment through smart reminders.
+3. To provide a transparent and secure way to track all financial transactions.
+4. To simplify the verification of payments using modern AI technology.
+
+So far, we have built a robust system that handles multi-role logins, 
+automated voucher generation, real-time notifications, sibling management 
+(parents seeing all their kids in one place), and a secure subscription system 
+for schools.
+================================================================================

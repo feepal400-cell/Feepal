@@ -1,0 +1,23 @@
+FeePal Changelog - v1.0.2
+==========================
+Release Date: 2026-05-05
+
+[Security & Authentication]
+- IMPLEMENTED: Strict unique constraints for School Address and Admin Email during registration.
+- IMPLEMENTED: Secure 6-digit Email OTP Verification flow for all new Administrator accounts.
+- ENHANCED: Atomic signup rollback mechanism to prevent partial account creation on failures.
+
+[Notifications & Alerts]
+- IMPLEMENTED: Intelligent Alerting Engine for automated parent notifications.
+- FIXED: Real-time synchronization of in-app alerts when fee vouchers are issued.
+- ENHANCED: Professional multi-channel (Push & In-App) notification payloads for fee alerts.
+
+[Data Integrity & UX]
+- ENHANCED: Mandatory field validation with visual indicators (asterisks and red backgrounds) on Signup and Student Management modules.
+- UPDATED: Standardized class selections to Primary levels (Class 1-10) for simplified management.
+- FIXED: Real-time phone number formatting (+92 3XX XXXXXXX) across all administrative forms.
+
+[Bug Fixes]
+- Resolved minor UI inconsistencies in the Student Management sheet.
+- Fixed session restoration issues for multi-child parent accounts.
+- Optimized database queries for faster dashboard loading.

@@ -1,0 +1,6 @@
+FeePal v1.0.12 Changelog
+
+1) Implemented OCR Verification which looks for duedate, correct fee amount, bank stamp, authorized sign.
+2) Added a Resubscription button in Subscription Details screen which leads the admin to default subscription screen.
+3) Fixed the naming issues in Parent Dashboard student card, Pending Vouchers to Pending Months.
+4) When first installment is paid it updates the remaining dues in student card in parents dashboard.

@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- HELPERS ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/super_admins/$(request.auth.token.email)) || 
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'super_admin'
+      );
+    }
+
+    function isSchoolOwner(adminId) {
+      return isSignedIn() && (request.auth.uid == adminId || isSuperAdmin());
+    }
+
+    // Checks if the user is the parent assigned to the student document
+    function isParentOfStudent(studentData) {
+      return isSignedIn() && (request.auth.uid == studentData.parentId || request.auth.token.email == studentData.parentEmail);
+    }
+
+    // --- SUPER ADMINS ---
+    match /super_admins/{adminEmail} {
+      allow read: if isSignedIn();
+      allow write: if false; 
+    }
+
+    // --- SCHOOLS ---
+    match /schools/{schoolName} {
+      allow read: if true; 
+      allow write: if isSignedIn(); 
+    }
+
+    // --- SUBSCRIPTIONS ---
+    match /subscriptions/{subId} {
+      allow read: if isSuperAdmin() || (isSignedIn() && resource.data.adminId == request.auth.uid);
+      allow write: if isSignedIn();
+    }
+
+    // --- ADMINS & NESTED DATA ---
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isSchoolOwner(adminId);
+      
+      // Fixed: Allows Parents to read nested students if they are the parent
+      match /students/{studentId} { 
+        allow read: if isSchoolOwner(adminId) || isParentOfStudent(resource.data);
+        allow write: if isSchoolOwner(adminId); 
+      }
+      
+      // Fixed: Allows Parents to read their child's fees
+      match /fees/{feeId} { 
+        allow read: if isSchoolOwner(adminId) || isParentOfStudent(resource.data);
+        allow write: if isSchoolOwner(adminId); 
+      }
+
+      match /activities/{activityId} { allow read, write: if isSchoolOwner(adminId); }
+      match /alerts/{alertId} { allow read, write: if isSchoolOwner(adminId); }
+    }
+
+    // --- GLOBAL COLLECTIONS (Flat Architecture Support) ---
+    
+    // Allows parents to find their students regardless of where they are in the hierarchy
+    match /{path=**}/students/{studentId} {
+      allow read: if isSignedIn(); 
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+    
+    match /{path=**}/notifications/{notificationId} {
+      allow read: if isSignedIn();
+    }
+
+    // --- DEVELOPMENT CATCH-ALL ---
+    // This acts as a fallback to prevent "Permission Denied" during your FYP testing
+    match /{document=**} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

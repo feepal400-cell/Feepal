@@ -1,0 +1,16 @@
+FeePal Changelog - v1.0.10
+--------------------------
+Date: 2026-05-17
+
+What's New:
+1. Fixed Class Sorting Issue: Class 10 fee will now correctly appear at the end of the list.
+2. Voucher Due Date: Fixed the default date from 10th of the month to 10 days from the voucher creation date.
+3. Subscription Rejection Reason: Added a reason field for Super Admins to specify why a subscription was rejected, helping users understand the next steps.
+4. Bank Details Reminder: Added a 30-second timer popup for admins if bank details are not updated, preventing voucher creation until details are provided.
+5. Parent Dashboard Fix: Optimized the annual year card to only show details of the previous month (if any) and the current month.
+6. Modernized UI Errors: Updated all error messages to a modern and clean UI for better user experience.
+7. Account Deletion: Added a "Delete Account" button on the Subscription Screen to allow users to permanently wipe their account.
+8. About Us Screen: Added a dedicated "About Us" screen that accurately displays the latest app version and contact information.
+
+Thank you for using FeePal!
+Making school management effortless.

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "910189307949",
+    "project_id": "feepal-ebd7a",
+    "storage_bucket": "feepal-ebd7a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:910189307949:android:006fa6da2b6ca1a8cc70a4",
+        "android_client_info": {
+          "package_name": "com.example.main_dart"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlRdStsCb1LLGjQFrPrHxDWy-njBnM2zE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
