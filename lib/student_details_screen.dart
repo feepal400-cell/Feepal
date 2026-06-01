@@ -391,19 +391,21 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(monthName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 4),
-                    Text(
-                      isInstallment ? Translations.get('Installment Plan', isUrdu) : Translations.get('Standard Voucher', isUrdu),
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(monthName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 4),
+                      Text(
+                        isInstallment ? Translations.get('Installment Plan', isUrdu) : Translations.get('Standard Voucher', isUrdu),
+                        style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ),
                 if (!isInstallment)
-                  _buildProofAndStatus(data['paymentProofUrl'], status, isUrdu, () => _toggleVoucherStatus(doc.id, status)),
+                  _buildProofAndStatus(data['voucherImageUrl'] ?? data['paymentProofUrl'], status, isUrdu, () => _toggleVoucherStatus(doc.id, status)),
               ],
             ),
           ),
@@ -489,15 +491,45 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
         child: Stack(
           alignment: Alignment.topRight,
           children: [
-            InteractiveViewer(
-              child: Image.network(url, fit: BoxFit.contain),
+            Container(
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height * 0.7,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: Colors.black.withOpacity(0.5),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.network(
+                  url, 
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  },
+                  errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.broken_image, color: Colors.white, size: 50)),
+                ),
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.white, size: 30),
-              onPressed: () => Navigator.pop(context),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
             ),
           ],
         ),
@@ -522,12 +554,15 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           children: [
             Icon(isPaid ? Icons.check_circle : Icons.pending, size: 14, color: isPaid ? Colors.green : Colors.orange),
             const SizedBox(width: 4),
-            Text(
-              Translations.get(isPaid ? 'Paid' : 'Unpaid', isUrdu),
-              style: TextStyle(
-                color: isPaid ? Colors.green : Colors.orange,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+            Flexible(
+              child: Text(
+                Translations.get(isPaid ? 'Paid' : 'Unpaid', isUrdu),
+                style: TextStyle(
+                  color: isPaid ? Colors.green : Colors.orange,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -567,7 +602,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               ],
             ),
           ),
-          _buildProofAndStatus(inst['paymentProofUrl'], inst['status'], isUrdu, () => _toggleInstallmentStatus(voucherId, index, inst['status'])),
+          _buildProofAndStatus(inst['voucherImageUrl'] ?? inst['paymentProofUrl'], inst['status'], isUrdu, () => _toggleInstallmentStatus(voucherId, index, inst['status'])),
         ],
       ),
     );

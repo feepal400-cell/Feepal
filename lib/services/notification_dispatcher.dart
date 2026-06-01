@@ -68,8 +68,9 @@ class NotificationDispatcher {
             type: 'payment_success',
           );
         } else {
+          String normalizedTopic = PushNotificationDispatcher.normalizeTopic('parent_$studentId');
           await PushNotificationDispatcher.sendNotificationToTopic(
-            topic: 'parent_$studentId',
+            topic: normalizedTopic,
             title: 'Payment Verified',
             body: messageTemplate,
           );

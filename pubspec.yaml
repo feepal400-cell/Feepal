@@ -5,7 +5,7 @@ description: "FeePal: Automated school fee management and reminder system."
 publish_to: 'none'
 
 # Current version for FeePal-v1.0.13.apk naming
-version: 1.0.13+1
+version: 1.0.14+1
 
 environment:
   sdk: ^3.11.4

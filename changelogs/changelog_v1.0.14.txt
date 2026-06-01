@@ -1,0 +1,3 @@
+v1.0.14 Changelogs
+1) Integrated FeePal website with FeePal App Database
+2) Fixed an OCR verification Issue where It was not uploading the payment proof to firestore, is now fixed.

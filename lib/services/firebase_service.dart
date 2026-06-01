@@ -233,6 +233,7 @@ class FirebaseService {
     }
   }
 
+
   /// Helper to subscribe a parent to FCM topics for their children's classes
   Future<void> _subscribeToClassTopics(List<Map<String, dynamic>> children) async {
     try {
@@ -243,6 +244,13 @@ class FirebaseService {
           String topic = 'class_$normalized';
           await FirebaseMessaging.instance.subscribeToTopic(topic);
           debugPrint("🔔 [FCM] Subscribed to Topic: $topic");
+        }
+        
+        String? studentDocId = student['docId'];
+        if (studentDocId != null) {
+          String normalizedParentTopic = PushNotificationDispatcher.normalizeTopic('parent_$studentDocId');
+          await FirebaseMessaging.instance.subscribeToTopic(normalizedParentTopic);
+          debugPrint("🔔 [FCM] Subscribed to Topic: $normalizedParentTopic");
         }
       }
     } catch (e) {

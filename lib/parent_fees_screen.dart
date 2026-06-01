@@ -143,7 +143,7 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
         if (installmentIndex != null) {
            List installments = List.from(voucher['installments']);
            installments[installmentIndex]['status'] = 'paid';
-           installments[installmentIndex]['paymentDate'] = FieldValue.serverTimestamp();
+           installments[installmentIndex]['paymentDate'] = Timestamp.now();
            installments[installmentIndex]['voucherImageUrl'] = secureUrl;
            
            bool allPaid = installments.every((i) => i['status'] == 'paid' || i['status'] == 'Paid');
@@ -692,7 +692,14 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
                 style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500),
               ),
               const Spacer(),
-              _buildBadge('Pending', orangeColor),
+              _buildBadge(
+                (voucher['status'] == 'paid' || voucher['status'] == 'Paid') 
+                    ? Translations.get('Paid', isUrdu) 
+                    : (voucher['status'] == 'pending_manual' ? Translations.get('Review', isUrdu) : Translations.get('Pending', isUrdu)),
+                (voucher['status'] == 'paid' || voucher['status'] == 'Paid') 
+                    ? Colors.green 
+                    : (voucher['status'] == 'pending_manual' ? Colors.orange : orangeColor),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -825,7 +832,14 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
                 style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500),
               ),
               const Spacer(),
-              _buildBadge('Pending', orangeColor),
+              _buildBadge(
+                (inst['status'] == 'paid' || inst['status'] == 'Paid') 
+                    ? Translations.get('Paid', isUrdu) 
+                    : (inst['status'] == 'pending_manual' ? Translations.get('Review', isUrdu) : Translations.get('Pending', isUrdu)),
+                (inst['status'] == 'paid' || inst['status'] == 'Paid') 
+                    ? Colors.green 
+                    : (inst['status'] == 'pending_manual' ? Colors.orange : orangeColor),
+              ),
             ],
           ),
           const SizedBox(height: 12),
