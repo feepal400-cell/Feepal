@@ -4221,6 +4221,20 @@ class FirebaseService {
           classesToSync.add({'class': className, 'month': currentMonth});
         }
 
+        // Fetch templates already created for the new month (e.g., via Next Month tab)
+        var newTemplatesSnapshot = await adminDoc.reference
+            .collection('monthly_fees')
+            .where('monthYear', isEqualTo: currentMonth)
+            .get();
+            
+        for (var newDoc in newTemplatesSnapshot.docs) {
+          String className = newDoc.data()['className'];
+          bool alreadyAdded = classesToSync.any((c) => c['class'] == className);
+          if (!alreadyAdded) {
+            classesToSync.add({'class': className, 'month': currentMonth});
+          }
+        }
+
         // Commit all new templates
         await batch.commit();
 
@@ -4231,73 +4245,54 @@ class FirebaseService {
 
         // 3. Update lastRolloverMonth
         await adminDoc.reference.update({'lastRolloverMonth': currentMonth});
+        
+        // 4. Ultimate Fail-safe: Sync all fee statuses to ensure UI is 100% accurate
+        await syncAllStudentsFeeStatus(adminId);
+        
         debugPrint("✅ [Rollover] Monthly rollover complete.");
       }
     } catch (e) { 
       debugPrint("🚨 [Rollover] Error during monthly rollover: $e"); 
     } 
-  } 
+  }
 
-  // ==========================================
-  // PARENT-ADMIN CHAT FEATURES
-  // ==========================================
-
-  /// Send a message between a Parent and an Admin
   Future<void> sendParentAdminMessage({
     required String parentId,
     required String adminId,
     required String text,
     required String senderRole,
-    required String parentName,
+    String parentName = 'Parent',
   }) async {
     try {
-      String senderId = senderRole == 'parent' ? parentId : adminId;
-
-      // 1. Add message to 'messages' subcollection
+      // 1. Save message to Firestore
       await _firestore
           .collection('parent_chats')
-          .doc(parentId)
+          .doc('${adminId}_$parentId')
           .collection('messages')
           .add({
-        'text': text,
-        'senderId': senderId,
+        'senderId': senderRole == 'admin' ? adminId : parentId,
         'senderRole': senderRole,
+        'text': text,
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      // 2. Determine unread status based on sender
-      bool hasUnreadForAdmin = senderRole == 'parent';
-      bool hasUnreadForParent = senderRole == 'admin';
-
-      // 3. Update top-level 'parent_chats' document
-      final chatUpdate = {
-        'parentId': parentId,
+      // 2. Update parent chat room metadata
+      await _firestore.collection('parent_chats').doc('${adminId}_$parentId').set({
         'adminId': adminId,
+        'parentId': parentId,
         'parentName': parentName,
+        'lastMessage': text,
         'lastMessageText': text,
         'lastMessageTime': FieldValue.serverTimestamp(),
-      };
+        'hasUnreadForAdmin': senderRole == 'parent',
+        'hasUnreadForParent': senderRole == 'admin',
+      }, SetOptions(merge: true));
 
-      if (hasUnreadForAdmin) {
-        chatUpdate['hasUnreadForAdmin'] = true;
-      }
-      if (hasUnreadForParent) {
-        chatUpdate['hasUnreadForParent'] = true;
-      }
-
-      await _firestore.collection('parent_chats').doc(parentId).set(
-            chatUpdate,
-            SetOptions(merge: true),
-          );
-
-      // 4. Send Push Notification to Admin if Parent sent it
-      if (senderRole == 'parent') {
-        await _notifyAdminNewParentMessage(adminId, parentName, text, parentId);
-      }
-
-      // 5. Send Push Notification to Parent if Admin sent it
+      // 3. Send Push Notifications
       if (senderRole == 'admin') {
         await _notifyParentNewAdminMessage(adminId, parentId, text);
+      } else {
+        await _notifyAdminNewParentMessage(adminId, parentName, text, parentId);
       }
     } catch (e) {
       debugPrint("❌ [FirebaseService] sendParentAdminMessage Error: $e");
@@ -4368,10 +4363,10 @@ class FirebaseService {
   }
 
   /// Get Messages Stream for a Parent-Admin Chat
-  Stream<QuerySnapshot> getParentAdminMessagesStream(String parentId) {
+  Stream<QuerySnapshot> getParentAdminMessagesStream(String parentId, String adminId) {
     return _firestore
         .collection('parent_chats')
-        .doc(parentId)
+        .doc('${adminId}_$parentId')
         .collection('messages')
         .orderBy('timestamp', descending: true)
         .snapshots();
@@ -4387,7 +4382,7 @@ class FirebaseService {
   }
 
   /// Mark Chat as Read
-  Future<void> markParentAdminChatAsRead(String parentId, String role) async {
+  Future<void> markParentAdminChatAsRead(String parentId, String adminId, String role) async {
     try {
       Map<String, dynamic> updates = {};
       if (role == 'admin') {
@@ -4397,7 +4392,7 @@ class FirebaseService {
       }
 
       if (updates.isNotEmpty) {
-        await _firestore.collection('parent_chats').doc(parentId).update(updates);
+        await _firestore.collection('parent_chats').doc('${adminId}_$parentId').update(updates);
       }
     } catch (e) {
       debugPrint("❌ [FirebaseService] markParentAdminChatAsRead Error: $e");
@@ -4406,12 +4401,12 @@ class FirebaseService {
 
   // --- DELETE CHAT UTILITIES ---
 
-  Future<void> deleteParentChat(String parentId) async {
+  Future<void> deleteParentChat(String parentId, String adminId) async {
     try {
       // Get all messages in the subcollection
       final messagesSnapshot = await _firestore
           .collection('parent_chats')
-          .doc(parentId)
+          .doc('${adminId}_$parentId')
           .collection('messages')
           .get();
 
@@ -4422,13 +4417,33 @@ class FirebaseService {
       }
       
       // Delete the main chat document
-      batch.delete(_firestore.collection('parent_chats').doc(parentId));
+      batch.delete(_firestore.collection('parent_chats').doc('${adminId}_$parentId'));
 
       // Commit the batch
       await batch.commit();
       debugPrint("🗑️ [FirebaseService] Deleted parent chat room: $parentId");
     } catch (e) {
       debugPrint("❌ [FirebaseService] deleteParentChat Error: $e");
+    }
+  }
+
+  Future<void> wipeOrphanChats() async {
+    try {
+      final query = await _firestore.collection('parent_chats').get();
+      for (var doc in query.docs) {
+        if (!doc.id.contains('_')) { // Old format doesn't contain an underscore
+          final messages = await _firestore.collection('parent_chats').doc(doc.id).collection('messages').get();
+          WriteBatch batch = _firestore.batch();
+          for (var msg in messages.docs) {
+            batch.delete(msg.reference);
+          }
+          batch.delete(doc.reference);
+          await batch.commit();
+          debugPrint("🧹 [Scrub] Wiped orphan chat: ${doc.id}");
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ [Scrub] Error wiping orphan chats: $e");
     }
   }
 
@@ -4497,7 +4512,7 @@ class FirebaseService {
     
     String plan = adminData['planType'] ?? 'monthly';
     int extendedDays = adminData['extendedDays'] ?? 0;
-    int allowedDays = (plan == 'yearly' ? 365 : 30) + extendedDays;
+    int allowedDays = (plan.toLowerCase() == 'yearly' ? 365 : 30) + extendedDays;
     DateTime expiration = start.toDate().add(Duration(days: allowedDays));
     
     // Check if the current time is past expiration
@@ -4514,7 +4529,7 @@ class FirebaseService {
     
     String plan = adminData['planType'] ?? 'monthly';
     int extendedDays = adminData['extendedDays'] ?? 0;
-    int allowedDays = (plan == 'yearly' ? 365 : 30) + extendedDays;
+    int allowedDays = (plan.toLowerCase() == 'yearly' ? 365 : 30) + extendedDays;
     DateTime expiration = start.toDate().add(Duration(days: allowedDays));
     int diff = expiration.difference(secureTime).inDays;
     

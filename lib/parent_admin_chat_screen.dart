@@ -58,7 +58,7 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
     _scrollController.addListener(_scrollListener);
     
     // Mark chat as read
-    _firebaseService.markParentAdminChatAsRead(widget.parentId, widget.role);
+    _firebaseService.markParentAdminChatAsRead(widget.parentId, widget.adminId, widget.role);
   }
 
   void _scrollListener() {
@@ -175,7 +175,7 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
               children: [
                 // Messages list
                 StreamBuilder<QuerySnapshot>(
-                  stream: _firebaseService.getParentAdminMessagesStream(widget.parentId),
+                  stream: _firebaseService.getParentAdminMessagesStream(widget.parentId, widget.adminId),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Center(
@@ -345,7 +345,7 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
                       TextButton(
                         onPressed: () async {
                           Navigator.pop(ctx);
-                          await _firebaseService.deleteParentChat(widget.parentId);
+                          await _firebaseService.deleteParentChat(widget.parentId, widget.adminId);
                           if (mounted) Navigator.pop(context);
                         },
                         child: const Text('Delete', style: TextStyle(color: Colors.red)),

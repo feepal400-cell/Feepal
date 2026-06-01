@@ -1,0 +1,6 @@
+Changelog v1.0.15
+1) Updated Changelog UI
+2) Fixed Subscription and Resubscription days issue, now the days sync properly.
+3) Implemented Phone Number Login System
+4) Fixed issues with OCR Verification, it stores payment proof in firestore and updates status in realtime.
+5) Fixed Issues in In-App Chat Messaging, now the name of parent and last sent message appears instead of just "Parent" label.

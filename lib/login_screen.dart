@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'dart:io';
 import 'signup_screen.dart';
 import 'language_config.dart';
@@ -110,9 +111,16 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     String identifier = _emailController.text.trim();
-    if (identifier.startsWith('0') && RegExp(r'^0[0-9]{10}$').hasMatch(identifier)) {
-      identifier = '+92${identifier.substring(1)}';
-      _emailController.text = identifier;
+    if (!identifier.contains('@')) {
+      String digits = identifier.replaceAll(RegExp(r'[^0-9]'), '');
+      if (digits.startsWith('92')) {
+        digits = digits.substring(2);
+      } else if (digits.startsWith('0')) digits = digits.substring(1);
+      
+      if (digits.length == 10) {
+        identifier = '+92 ${digits.substring(0, 3)} ${digits.substring(3)}';
+        _emailController.text = identifier;
+      }
     }
 
     // Email/Phone Validation
@@ -121,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
       isValid = false;
     } else {
       bool isEmail = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(identifier);
-      bool isPhone = RegExp(r'^\+?[0-9]{10,14}$').hasMatch(identifier);
+      bool isPhone = RegExp(r'^\+?[0-9]{10,14}$').hasMatch(identifier.replaceAll(' ', ''));
 
       if (!isEmail && !isPhone) {
         _emailError = Translations.get('Enter a valid email or phone number', isUrdu);
@@ -131,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
 
-    bool isPhone = RegExp(r'^\+?[0-9]{10,14}$').hasMatch(identifier);
+    bool isPhone = RegExp(r'^\+?[0-9]{10,14}$').hasMatch(identifier.replaceAll(' ', ''));
     
     // Password Validation (Skip for Admin Phone Login as it uses OTP)
     if (!isParentSelected && isPhone) {
@@ -999,84 +1007,216 @@ adminData)),
   }
 
   Widget _buildChangelogOverlay() {
-    return Container(
-      color: Colors.black54,
-      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 100),
-      child: Center(
-        child: Material(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
-          elevation: 20,
+    return Stack(
+      children: [
+        // Blurred background
+        Positioned.fill(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.4),
+            ),
+          ),
+        ),
+        // Modal content
+        Center(
           child: Padding(
-            padding: const EdgeInsets.all(25.0),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2168F8).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.update, color: Color(0xFF2168F8)),
-                      ),
-                      const SizedBox(width: 15),
-                      const Expanded(
-                        child: Text(
-                          'Changelogs: v1.0.14',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  const Divider(),
-                  const SizedBox(height: 5),
-                  _buildChangelogItem(Icons.web, 'Integrated FeePal website with FeePal App Database.'),
-                  _buildChangelogItem(Icons.document_scanner_outlined, 'Fixed an OCR verification Issue where it was not uploading the payment proof to firestore.'),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _canCloseChangelog ? () => setState(() => _showChangelog = false) : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2168F8),
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: Colors.grey[300],
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      ),
-                      child: Text(
-                        _canCloseChangelog ? 'Got it, Let\'s Go!' : 'Reading (3s)...',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.75,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 30,
+                    offset: const Offset(0, 15),
                   ),
                 ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF2168F8), Color(0xFF00D4FF)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(Icons.rocket_launch, color: Colors.white, size: 28),
+                          ),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Changelogs',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'app version: v1.0.16',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Scrollable List
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildChangelogItem(
+                              icon: Icons.document_scanner_outlined,
+                              title: 'Fixed OCR Verification Issues',
+                              description: 'Now app will throw an error when used same payment proof for another installment',
+                              color: Colors.blue,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildChangelogItem(
+                              icon: Icons.chat_bubble_outline,
+                              title: 'Fixed In-App Messaging',
+                              description: 'Now the chats are uniquely stored in firestore',
+                              color: Colors.teal,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildChangelogItem(
+                              icon: Icons.update,
+                              title: 'New Changelog UI',
+                              description: 'A modern and scrollable changelog interface.',
+                              color: Colors.purple,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildChangelogItem(
+                              icon: Icons.bug_report_outlined,
+                              title: 'Fixed Known Issues',
+                              description: 'General bug fixes and performance improvements.',
+                              color: Colors.orange,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildChangelogItem(
+                              icon: Icons.phone_android,
+                              title: 'Implemented Phone Login Logic',
+                              description: 'Parents and Admins can both now login through their phone numbers',
+                              color: Colors.green,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Action Button
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed: _canCloseChangelog ? () => setState(() => _showChangelog = false) : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2168F8),
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: Colors.grey[300],
+                            disabledForegroundColor: Colors.grey[600],
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            _canCloseChangelog ? "Got it, Let's Go!" : 'Reading (3s)...',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 
-
-  Widget _buildChangelogItem(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+  Widget _buildChangelogItem({required IconData icon, required String title, required String description, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.1), width: 1),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: Colors.black54),
-          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 20, color: color),
+          ),
+          const SizedBox(width: 16),
           Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.black54,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

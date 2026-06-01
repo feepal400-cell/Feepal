@@ -1,0 +1,6 @@
+Changelog v1.0.16
+1) Fixed OCR Verification Issues, now app will throw an error when used same payment proof for another installment
+2) Fixed In-App Messaging, now the chats are uniquely stored in firestore
+3) New Changelog UI
+4) Fixed Known Issues
+5) Implemented Phone Login Logic, Parents and Admins can both now login through their phone numbers

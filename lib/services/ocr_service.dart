@@ -6,8 +6,9 @@ import 'package:intl/intl.dart';
 class OcrValidationResult {
   final bool success;
   final String? errorMessage;
+  final String? transactionId;
 
-  OcrValidationResult({required this.success, this.errorMessage});
+  OcrValidationResult({required this.success, this.errorMessage, this.transactionId});
 }
 
 class OcrService {
@@ -37,6 +38,7 @@ class OcrService {
     required List<Map<String, dynamic>> allVouchers,
     required double expectedAmount,
     required String adminBankName,
+    int? currentInstallmentNumber,
   }) async {
     try {
       // ----------------------------------------------------------------------
@@ -92,12 +94,12 @@ class OcrService {
       // ----------------------------------------------------------------------
       final inputImage = InputImage.fromFile(imageFile);
       
-      final ocrResult = await _verifyOCRText(inputImage, currentMonthYearStr ?? '');
+      final ocrResult = await _verifyOCRText(inputImage, currentMonthYearStr ?? '', allVouchers, currentInstallmentNumber);
       if (!ocrResult.success) {
         return ocrResult;
       }
 
-      return OcrValidationResult(success: true);
+      return ocrResult;
 
     } catch (e) {
       debugPrint("OCR Processing Error: $e");
@@ -108,7 +110,7 @@ class OcrService {
     }
   }
 
-  static Future<OcrValidationResult> _verifyOCRText(InputImage inputImage, String expectedMonth) async {
+  static Future<OcrValidationResult> _verifyOCRText(InputImage inputImage, String expectedMonth, List<Map<String, dynamic>> allVouchers, int? currentInstallmentNumber) async {
     final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
     try {
       final recognizedText = await textRecognizer.processImage(inputImage);
@@ -126,8 +128,43 @@ class OcrService {
       
       // Regex 2: Transaction ID (10 to 16 alphanumeric characters)
       final trxRegex = RegExp(r'\b[A-Z0-9]{10,16}\b');
-      if (!trxRegex.hasMatch(fullText)) {
+      final trxMatches = trxRegex.allMatches(fullText);
+      if (trxMatches.isEmpty) {
         return OcrValidationResult(success: false, errorMessage: "Voucher validation failed. Please ensure the bank print/stamp is clearly visible.");
+      }
+      
+      String extractedTrxId = trxMatches.first.group(0)!;
+      
+      // Deduplication Check
+      for (var match in trxMatches) {
+          String potentialTrx = match.group(0)!;
+          for (var v in allVouchers) {
+             if (v['transactionId'] == potentialTrx) {
+                 return OcrValidationResult(success: false, errorMessage: "Error: This transaction proof has already been submitted for a previous installment. Duplicated proofs are not allowed.");
+             }
+             if (v['installments'] != null && v['installments'] is List) {
+                 for (var inst in v['installments']) {
+                     if (inst['transactionId'] == potentialTrx) {
+                         return OcrValidationResult(success: false, errorMessage: "Error: This transaction proof has already been submitted for a previous installment. Duplicated proofs are not allowed.");
+                     }
+                 }
+             }
+          }
+      }
+
+      // Explicit Installment Text Matching
+      if (currentInstallmentNumber != null) {
+          final mismatchRegex = RegExp(r'\b(?:INST|INSTALLMENT|INSTALL)\s*(0?[1-9])\b|\b(0?[1-9])(?:ST|ND|RD|TH)\s*(?:INST|INSTALLMENT|INSTALL)\b', caseSensitive: false);
+          final matches = mismatchRegex.allMatches(fullText);
+          for (var match in matches) {
+              String? digitStr = match.group(1) ?? match.group(2);
+              if (digitStr != null) {
+                  int digit = int.parse(digitStr);
+                  if (digit != currentInstallmentNumber) {
+                       return OcrValidationResult(success: false, errorMessage: "Error: Installment mismatch. You are uploading a proof for a different installment than the one selected.");
+                  }
+              }
+          }
       }
       
       // Regex 3: Date Matching
@@ -159,7 +196,7 @@ class OcrService {
         return OcrValidationResult(success: false, errorMessage: "Voucher validation failed. Please ensure the bank print/stamp is clearly visible.");
       }
       
-      return OcrValidationResult(success: true);
+      return OcrValidationResult(success: true, transactionId: extractedTrxId);
     } finally {
       textRecognizer.close();
     }

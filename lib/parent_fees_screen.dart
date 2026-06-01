@@ -32,7 +32,7 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
   final Color secondaryColor = const Color(0xFF009BCB); // Darker Blue
   final Color greenColor = const Color(0xFF4CAF50);
   final Color orangeColor = const Color(0xFFFF9800);
-  bool _isUploadingVoucher = false;
+  String? _loadingVoucherId;
 
   @override
   void initState() {
@@ -87,7 +87,7 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
     
     if (image == null) return;
     
-    setState(() => _isUploadingVoucher = true);
+    setState(() => _loadingVoucherId = installmentIndex != null ? "${voucher['id']}_$installmentIndex" : voucher['id']);
     
     try {
       final File imageFile = File(image.path);
@@ -129,6 +129,7 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
         allVouchers: allVouchers,
         expectedAmount: expectedAmount,
         adminBankName: adminBankName,
+        currentInstallmentNumber: installmentIndex != null ? installmentIndex + 1 : null,
       );
       
       if (result.success) {
@@ -145,6 +146,9 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
            installments[installmentIndex]['status'] = 'paid';
            installments[installmentIndex]['paymentDate'] = Timestamp.now();
            installments[installmentIndex]['voucherImageUrl'] = secureUrl;
+           if (result.transactionId != null) {
+               installments[installmentIndex]['transactionId'] = result.transactionId;
+           }
            
            bool allPaid = installments.every((i) => i['status'] == 'paid' || i['status'] == 'Paid');
            updates['installments'] = installments;
@@ -153,6 +157,9 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
            updates['status'] = 'paid';
            updates['paymentDate'] = FieldValue.serverTimestamp();
            updates['voucherImageUrl'] = secureUrl;
+           if (result.transactionId != null) {
+               updates['transactionId'] = result.transactionId;
+           }
         }
         
         await _firebaseService.updateVoucher(
@@ -182,7 +189,7 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
       }
     } finally {
-      if (mounted) setState(() => _isUploadingVoucher = false);
+      if (mounted) setState(() => _loadingVoucherId = null);
     }
   }
 
@@ -221,7 +228,7 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
   }
 
   Future<void> _submitForManualVerification(File imageFile, Map<String, dynamic> voucher, String adminId, {int? installmentIndex}) async {
-      setState(() => _isUploadingVoucher = true);
+      setState(() => _loadingVoucherId = installmentIndex != null ? "${voucher['id']}_$installmentIndex" : voucher['id']);
       try {
         String studentId = _parentData!['docId'].toString();
         String studentName = _parentData!['studentName'] ?? 'Unknown';
@@ -270,7 +277,7 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
           }
       } finally {
-        if (mounted) setState(() => _isUploadingVoucher = false);
+        if (mounted) setState(() => _loadingVoucherId = null);
       }
   }
 
@@ -725,14 +732,14 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
               width: double.infinity,
               height: 48,
               child: ThrottledButton.elevated(
-                onPressed: _isUploadingVoucher ? () {} : () => _handleVoucherUpload(voucher),
+                onPressed: _loadingVoucherId != null ? () {} : () => _handleVoucherUpload(voucher),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
-                child: _isUploadingVoucher
+                child: _loadingVoucherId == voucher['id']
                   ? const SizedBox(
                       height: 20, width: 20,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
@@ -865,14 +872,14 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
               width: double.infinity,
               height: 48,
               child: ThrottledButton.elevated(
-                onPressed: _isUploadingVoucher ? () {} : () => _handleVoucherUpload(voucher, installmentIndex: index),
+                onPressed: _loadingVoucherId != null ? () {} : () => _handleVoucherUpload(voucher, installmentIndex: index),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
-                child: _isUploadingVoucher
+                child: _loadingVoucherId == "${voucher['id']}_$index"
                   ? const SizedBox(
                       height: 20, width: 20,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)

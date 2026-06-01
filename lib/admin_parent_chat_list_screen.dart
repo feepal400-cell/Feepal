@@ -229,8 +229,8 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
 
   // ===== CHAT TILE =====
   Widget _buildChatTile(Map<String, dynamic> room, String parentId, int index) {
-    String parentName = room['parentName'] ?? 'Parent';
-    String lastMsg = room['lastMessageText'] ?? '';
+    String fallbackName = room['parentName'] ?? 'Parent';
+    String lastMsg = room['lastMessageText'] ?? room['lastMessage'] ?? '';
     bool hasUnread = room['hasUnreadForAdmin'] == true;
     dynamic timestamp = room['lastMessageTime'];
 
@@ -255,141 +255,176 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
       tween: Tween<double>(begin: 0, end: 1),
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
-        return Opacity(
-          opacity: value.clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: Offset(0, (1 - value) * 30),
-            child: child,
-          ),
-        );
-      },
-      child: GestureDetector(
-        onTap: () async {
-          // Mark as read
-          await _firebaseService.markParentAdminChatAsRead(parentId, 'admin');
+        return FutureBuilder<DocumentSnapshot?>(
+          future: room['parentName'] == null 
+              ? FirebaseFirestore.instance.collection('admins').doc(_currentAdminId).collection('students').doc(parentId).get()
+              : Future.value(null),
+          builder: (context, snapshot) {
+            String parentName = fallbackName;
+            if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+              parentName = (snapshot.data!.data() as Map<String, dynamic>)['parentName'] ?? 'Parent';
+            }
 
-          if (mounted) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ParentAdminChatScreen(
-                  parentId: parentId,
-                  parentName: parentName,
-                  adminId: _currentAdminId,
-                  role: 'admin',
-                ),
-              ),
-            );
-          }
-        },
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: hasUnread ? Colors.white : Colors.white.withOpacity(0.85),
-            borderRadius: BorderRadius.circular(18),
-            border: hasUnread
-                ? Border.all(color: const Color(0xFF9E38FF).withOpacity(0.15), width: 1)
-                : null,
-            boxShadow: [
-              BoxShadow(
-                color: hasUnread
-                    ? const Color(0xFF9E38FF).withOpacity(0.08)
-                    : Colors.black.withOpacity(0.03),
-                blurRadius: hasUnread ? 16 : 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Avatar
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF9E38FF).withOpacity(0.12),
-                      const Color(0xFFD500F9).withOpacity(0.08),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  border: Border.all(
-                    color: const Color(0xFF9E38FF).withOpacity(0.1),
-                    width: 1.5,
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(Icons.person_rounded, color: Color(0xFF9E38FF), size: 26),
-                ),
-              ),
-              const SizedBox(width: 14),
-              // Name + last message
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Row(
-                         children: [
-                              Flexible(
-                                child: Text(
-                                  parentName,
-                                  style: TextStyle(
-                                    fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
-                                    fontSize: 15,
-                                    color: const Color(0xFF1E293B),
+            return Opacity(
+              opacity: value.clamp(0.0, 1.0),
+              child: Transform.translate(
+                offset: Offset(0, (1 - value) * 30),
+                child: GestureDetector(
+                  onTap: () async {
+                    // Mark as read
+                    await _firebaseService.markParentAdminChatAsRead(parentId, _currentAdminId, 'admin');
+
+                    if (mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ParentAdminChatScreen(
+                            parentId: parentId,
+                            parentName: parentName,
+                            adminId: _currentAdminId,
+                            role: 'admin',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: hasUnread ? const Color(0xFF9E38FF) : Colors.grey[200]!,
+                        width: hasUnread ? 1.5 : 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Stack(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: hasUnread
+                                      ? const Color(0x1A9E38FF) // Light purple
+                                      : const Color(0xFFF0F2F5),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    parentName.isNotEmpty ? parentName[0].toUpperCase() : 'P',
+                                    style: TextStyle(
+                                      color: hasUnread ? const Color(0xFF9E38FF) : Colors.grey[600],
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               if (hasUnread)
-                                Container(
-                                  margin: const EdgeInsets.only(left: 6),
-                                  height: 6,
-                                  width: 6,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF9E38FF),
-                                    shape: BoxShape.circle,
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    width: 14,
+                                    height: 14,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF9E38FF),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2),
+                                    ),
                                   ),
                                 ),
                             ],
                           ),
-                        ),
-                        Text(
-                          timeStr,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: hasUnread ? const Color(0xFF9E38FF) : Colors.grey[400],
-                            fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        parentName,
+                                        style: TextStyle(
+                                          fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
+                                          fontSize: 16,
+                                          color: Colors.black87,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Text(
+                                      timeStr,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: hasUnread ? const Color(0xFF9E38FF) : Colors.grey[500],
+                                        fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        lastMsg,
+                                        style: TextStyle(
+                                          color: hasUnread ? Colors.black87 : Colors.grey[600],
+                                          fontSize: 14,
+                                          fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (hasUnread) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF9E38FF),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: const Text(
+                                          'NEW',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      lastMsg,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: hasUnread ? Colors.grey[700] : Colors.grey[400],
-                        fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            );
+          }
+        );
+      },
     );
   }
 }
