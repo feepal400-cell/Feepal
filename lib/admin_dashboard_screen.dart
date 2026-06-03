@@ -333,7 +333,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           context,
                           const Color(0xFF2168F8), // Navy Blue for Total Fees
                           Icons.analytics_outlined,
-                          'Total Fees',
+                          'Total Monthly Fees',
                           'Rs. ${(snapshot.data ?? 0).toInt()}',
                         );
                       },

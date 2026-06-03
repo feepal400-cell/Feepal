@@ -39,6 +39,9 @@ class OcrService {
     required double expectedAmount,
     required String adminBankName,
     int? currentInstallmentNumber,
+    String? schoolName,
+    String? schoolAddress,
+    String? voucherType,
   }) async {
     try {
       // ----------------------------------------------------------------------
@@ -94,7 +97,16 @@ class OcrService {
       // ----------------------------------------------------------------------
       final inputImage = InputImage.fromFile(imageFile);
       
-      final ocrResult = await _verifyOCRText(inputImage, currentMonthYearStr ?? '', allVouchers, currentInstallmentNumber);
+      final ocrResult = await _verifyOCRText(
+        inputImage, 
+        currentMonthYearStr ?? '', 
+        allVouchers, 
+        currentInstallmentNumber,
+        schoolName: schoolName,
+        schoolAddress: schoolAddress,
+        voucherType: voucherType,
+        expectedAmount: expectedAmount.toStringAsFixed(0),
+      );
       if (!ocrResult.success) {
         return ocrResult;
       }
@@ -110,7 +122,16 @@ class OcrService {
     }
   }
 
-  static Future<OcrValidationResult> _verifyOCRText(InputImage inputImage, String expectedMonth, List<Map<String, dynamic>> allVouchers, int? currentInstallmentNumber) async {
+  static Future<OcrValidationResult> _verifyOCRText(
+    InputImage inputImage, 
+    String expectedMonth, 
+    List<Map<String, dynamic>> allVouchers, 
+    int? currentInstallmentNumber, {
+    String? schoolName,
+    String? schoolAddress,
+    String? voucherType,
+    String? expectedAmount,
+  }) async {
     final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
     try {
       final recognizedText = await textRecognizer.processImage(inputImage);
@@ -126,8 +147,44 @@ class OcrService {
         return OcrValidationResult(success: false, errorMessage: "Voucher validation failed. Please ensure the bank print/stamp is clearly visible.");
       }
       
-      // Regex 2: Transaction ID (10 to 16 alphanumeric characters)
-      final trxRegex = RegExp(r'\b[A-Z0-9]{10,16}\b');
+      // Cross-School Security Constraints
+      if (schoolName != null && schoolName.isNotEmpty) {
+        // Just checking some part of the school name to avoid false negatives due to minor OCR errors
+        List<String> nameParts = schoolName.toUpperCase().split(' ').where((s) => s.length > 3).toList();
+        bool foundName = false;
+        if (nameParts.isEmpty) {
+          foundName = fullText.contains(schoolName.toUpperCase().replaceAll(' ', ''));
+        } else {
+          for (String part in nameParts) {
+            if (fullText.contains(part)) {
+              foundName = true;
+              break;
+            }
+          }
+        }
+        if (!foundName && nameParts.isNotEmpty) {
+           // As a fallback, check if any 4-letter sequence matches
+           foundName = fullText.contains(schoolName.toUpperCase().substring(0, schoolName.length > 4 ? 4 : schoolName.length));
+        }
+        if (!foundName && schoolName.length > 3) {
+          return OcrValidationResult(success: false, errorMessage: "Error: Cross-school validation failed. The school name on the voucher does not match.");
+        }
+      }
+
+      if (expectedAmount != null && expectedAmount.isNotEmpty) {
+         if (!fullText.contains(expectedAmount)) {
+             return OcrValidationResult(success: false, errorMessage: "Error: Amount validation failed. The paid amount on the voucher does not match the expected amount (Rs. $expectedAmount).");
+         }
+      }
+
+      if (voucherType != null && voucherType.isNotEmpty) {
+         if (voucherType.toUpperCase() == 'INSTALLMENT' && !fullText.contains('INST')) {
+            // Optional strict check
+         }
+      }
+      
+      // Regex 2: Transaction ID (10 to 16 alphanumeric characters, MUST contain at least one digit)
+      final trxRegex = RegExp(r'\b(?=.*\d)[A-Z0-9]{10,16}\b');
       final trxMatches = trxRegex.allMatches(fullText);
       if (trxMatches.isEmpty) {
         return OcrValidationResult(success: false, errorMessage: "Voucher validation failed. Please ensure the bank print/stamp is clearly visible.");
@@ -168,7 +225,7 @@ class OcrService {
       }
       
       // Regex 3: Date Matching
-      final dateMatches = RegExp(r'\b(\d{2})[-/]([A-Z]{3,}|\d{2})[-/](\d{2,4})\b', caseSensitive: false).allMatches(fullText);
+      final dateMatches = RegExp(r'\b(\d{2})[-/\s]([A-Z]{3,}|\d{2})[-/\s](\d{2,4})\b', caseSensitive: false).allMatches(fullText);
       bool hasValidDate = false;
       
       List<String> parts = expectedMonth.split('-');
@@ -194,6 +251,12 @@ class OcrService {
       
       if (!hasValidDate) {
         return OcrValidationResult(success: false, errorMessage: "Voucher validation failed. Please ensure the bank print/stamp is clearly visible.");
+      }
+
+      // Regex 4: Authorized Sign
+      final signRegex = RegExp(r'(SIGN|AUTHORIZED|AUTHORISED)', caseSensitive: false);
+      if (!signRegex.hasMatch(fullText)) {
+        return OcrValidationResult(success: false, errorMessage: "Voucher validation failed. Missing Authorized Sign.");
       }
       
       return OcrValidationResult(success: true, transactionId: extractedTrxId);

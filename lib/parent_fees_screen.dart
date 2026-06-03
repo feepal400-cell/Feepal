@@ -95,6 +95,8 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
       final adminId = _parentData!['adminId'];
       final adminData = await _firebaseService.getAdminData(adminId);
       final String adminBankName = adminData?['bankName'] ?? '';
+      final String schoolName = adminData?['schoolName'] ?? '';
+      final String schoolAddress = adminData?['address'] ?? '';
       
       final allVouchersSnapshot = await FirebaseFirestore.instance
           .collection('admins')
@@ -130,6 +132,9 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
         expectedAmount: expectedAmount,
         adminBankName: adminBankName,
         currentInstallmentNumber: installmentIndex != null ? installmentIndex + 1 : null,
+        schoolName: schoolName,
+        schoolAddress: schoolAddress,
+        voucherType: installmentIndex != null ? 'INSTALLMENT' : 'STANDARD',
       );
       
       if (result.success) {
@@ -352,7 +357,7 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
                     if (v['status'] == 'paid') {
                       double base = double.tryParse(v['baseFee']?.toString() ?? '0') ?? 0.0;
                       double add = double.tryParse(v['additionalCharge']?.toString() ?? '0') ?? 0.0;
-                      double pen = double.tryParse(v['latePenaltyApplied']?.toString() ?? v['latePenalty']?.toString() ?? '0') ?? 0.0;
+                      double pen = double.tryParse(v['latePenaltyApplied']?.toString() ?? '0') ?? 0.0;
                       return sum + (base + add + pen);
                     }
                     if (installments.isNotEmpty) {
@@ -491,10 +496,43 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
                               if (paidVouchers.isNotEmpty) ...[
                                 _buildSectionHeader(Translations.get('Payment History', isUrdu)),
                                 const SizedBox(height: 15),
-                                ...paidVouchers.map((v) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 15),
-                                  child: _buildPaidVoucherCard(v, isUrdu),
-                                )),
+                                ...() {
+                                  Map<String, List<Map<String, dynamic>>> grouped = {};
+                                  for (var v in paidVouchers) {
+                                    String m = _formatMonthYear(v['monthYear'] ?? 'Unknown');
+                                    if (!grouped.containsKey(m)) grouped[m] = [];
+                                    grouped[m]!.add(v);
+                                  }
+                                  List<Widget> widgets = [];
+                                  grouped.forEach((month, vouchersList) {
+                                    widgets.add(
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 10, bottom: 10),
+                                        child: Text(
+                                          month,
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+                                        ),
+                                      ),
+                                    );
+                                    for (var v in vouchersList) {
+                                      List installments = v['installments'] as List? ?? [];
+                                      if (installments.isNotEmpty) {
+                                        for (int i = 0; i < installments.length; i++) {
+                                          widgets.add(Padding(
+                                            padding: const EdgeInsets.only(bottom: 15),
+                                            child: _buildPaidInstallmentCard(v, installments[i] as Map<String, dynamic>, i, isUrdu),
+                                          ));
+                                        }
+                                      } else {
+                                        widgets.add(Padding(
+                                          padding: const EdgeInsets.only(bottom: 15),
+                                          child: _buildPaidVoucherCard(v, isUrdu),
+                                        ));
+                                      }
+                                    }
+                                  });
+                                  return widgets;
+                                }(),
                               ],
                               
                               if (unpaidVouchers.isEmpty && paidVouchers.isEmpty)
@@ -714,11 +752,37 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
           
           const SizedBox(height: 20),
           if (voucher['status'] == 'pending_manual')
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-              child: Center(child: Text(Translations.get('Pending Admin Review', isUrdu), style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))),
+            Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: Center(child: Text(Translations.get('Pending Admin Review', isUrdu), style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: _loadingVoucherId != null ? () {} : () => _handleVoucherUpload(voucher),
+                    icon: _loadingVoucherId == voucher['id']
+                      ? const SizedBox(
+                          height: 20, width: 20,
+                          child: CircularProgressIndicator(color: Colors.orange, strokeWidth: 2)
+                        )
+                      : const Icon(Icons.refresh, color: Colors.orange, size: 20),
+                    label: Text(
+                      Translations.get('Reupload Payment Proof', isUrdu),
+                      style: const TextStyle(color: Colors.orange, fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.orange),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
             )
           else if (voucher['status'] == 'paid' || voucher['status'] == 'Paid')
             Container(
@@ -854,11 +918,37 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
           
           const SizedBox(height: 20),
           if (inst['status'] == 'pending_manual')
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-              child: Center(child: Text(Translations.get('Pending Admin Review', isUrdu), style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))),
+            Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: Center(child: Text(Translations.get('Pending Admin Review', isUrdu), style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: _loadingVoucherId != null ? () {} : () => _handleVoucherUpload(voucher, installmentIndex: index),
+                    icon: _loadingVoucherId == "${voucher['id']}_$index"
+                      ? const SizedBox(
+                          height: 20, width: 20,
+                          child: CircularProgressIndicator(color: Colors.orange, strokeWidth: 2)
+                        )
+                      : const Icon(Icons.refresh, color: Colors.orange, size: 20),
+                    label: Text(
+                      Translations.get('Reupload Payment Proof', isUrdu),
+                      style: const TextStyle(color: Colors.orange, fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.orange),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
             )
           else if (inst['status'] == 'paid' || inst['status'] == 'Paid')
             Container(
@@ -954,6 +1044,92 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
               ),
               Text(
                 'Rs. ${total.toInt()}',
+                style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey),
+              const SizedBox(width: 8),
+              Text(
+                '${Translations.get('Due:', isUrdu)} $dueDate',
+                style: TextStyle(color: Colors.grey[600], fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Icons.attach_money, size: 20, color: Color(0xFF4CAF50)),
+              const SizedBox(width: 5),
+              Text(
+                '${Translations.get('Paid on:', isUrdu)} $paidDate',
+                style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              _buildBadge('Paid', greenColor),
+            ],
+          ),
+          const SizedBox(height: 15),
+          _buildInstallmentBadge(installmentLabel),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaidInstallmentCard(Map<String, dynamic> voucher, Map<String, dynamic> inst, int index, bool isUrdu) {
+    double amount = double.tryParse(inst['amount']?.toString() ?? '0') ?? 0.0;
+    
+    // Check if this installment had a late penalty applied (simplified check if overdue)
+    bool overdue = _isOverdue(inst['dueDateRaw'] ?? voucher['dueDateRaw']);
+    if (overdue && index == _getFirstUnpaidIndex(voucher['installments'])) {
+       double penalty = double.tryParse(voucher['latePenalty']?.toString() ?? '0') ?? 0.0;
+       amount += penalty;
+    }
+    
+    String className = voucher['className'] ?? 'N/A';
+    
+    dynamic dueDateRaw = inst['dueDateRaw'] ?? voucher['dueDateRaw'];
+    String dueDate = 'N/A';
+    if (dueDateRaw is Timestamp) {
+      dueDate = DateFormat('dd/MM/yyyy').format(dueDateRaw.toDate());
+    }
+
+    String installmentLabel = inst['label'] ?? 'Installment ${index + 1}';
+
+    dynamic paidDateRaw = inst['paidAt'] ?? inst['paymentDate'] ?? voucher['updatedAt'];
+    String paidDate = 'N/A';
+    if (paidDateRaw is Timestamp) {
+      paidDate = DateFormat('dd/MM/yyyy').format(paidDateRaw.toDate());
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                className,
+                style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+              ),
+              Text(
+                'Rs. ${amount.toInt()}',
                 style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
               ),
             ],

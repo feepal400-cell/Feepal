@@ -1415,29 +1415,46 @@ class FirebaseService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
-    // 🔥 Sync student feeStatus and lastFeeAmount if voucher is marked as paid
-    if (updates['status'] == 'paid') {
-      var unpaidVouchers = await _firestore
-          .collection('admins')
-          .doc(adminId)
-          .collection('students')
-          .doc(studentId)
-          .collection('vouchers')
-          .where('status', isEqualTo: 'unpaid')
-          .get();
-      
-      if (unpaidVouchers.docs.isEmpty) {
-        await _firestore
-            .collection('admins')
-            .doc(adminId)
-            .collection('students')
-            .doc(studentId)
-            .update({
-          'feeStatus': 'Paid',
-          'lastFeeAmount': 0,
-        });
+    // 🔥 Sync student feeStatus and lastFeeAmount comprehensively
+    var allVouchers = await _firestore
+        .collection('admins')
+        .doc(adminId)
+        .collection('students')
+        .doc(studentId)
+        .collection('vouchers')
+        .get();
+        
+    bool hasAnyUnpaid = false;
+    double totalUnpaidAmount = 0.0;
+    
+    for (var doc in allVouchers.docs) {
+      var vData = doc.data();
+      if (vData['status'] == 'unpaid' || vData['status'] == 'pending_manual') {
+         if (vData['installments'] != null && (vData['installments'] as List).isNotEmpty) {
+            for (var inst in vData['installments']) {
+               if (inst['status'] == 'unpaid' || inst['status'] == 'pending_manual') {
+                  hasAnyUnpaid = true;
+                  totalUnpaidAmount += (double.tryParse(inst['amount']?.toString() ?? '0') ?? 0.0);
+               }
+            }
+         } else {
+            hasAnyUnpaid = true;
+            double base = double.tryParse(vData['baseFee']?.toString() ?? '0') ?? 0.0;
+            double add = double.tryParse(vData['additionalCharge']?.toString() ?? '0') ?? 0.0;
+            totalUnpaidAmount += base + add;
+         }
       }
     }
+
+    await _firestore
+        .collection('admins')
+        .doc(adminId)
+        .collection('students')
+        .doc(studentId)
+        .update({
+      'feeStatus': hasAnyUnpaid ? 'Unpaid' : 'Paid',
+      'lastFeeAmount': totalUnpaidAmount,
+    });
 
     // Audit Logging
     await createAdminActivity(
@@ -1613,7 +1630,7 @@ class FirebaseService {
                 
                 double base = (data['baseFee'] ?? 0).toDouble();
                 double add = (data['additionalCharge'] ?? 0).toDouble();
-                double pen = (data['latePenaltyApplied'] ?? data['latePenalty'] ?? 0).toDouble();
+                double pen = (data['latePenaltyApplied'] ?? 0).toDouble();
                 double voucherTotal = base + add + pen;
 
                 if (!studentVoucherMap.containsKey(studentId) || voucherTotal > studentVoucherMap[studentId]!) {
@@ -1734,19 +1751,41 @@ class FirebaseService {
             if (pathParts.length >= 4) {
               String studentId = pathParts[3];
 
-              if (data['status'] == 'unpaid' && 
+              if ((data['status'] == 'unpaid' || data['status'] == 'pending_manual') && 
                   vMonth == currentMonth && 
                   activeClasses.contains(vClass) && 
                   vAdminId == user.uid &&
                   validStudentIds.contains(studentId)) {
                 
-                var dueDateRaw = data['dueDateRaw'];
-                if (dueDateRaw is Timestamp) {
-                  var due = dueDateRaw.toDate();
-                  var dueDay = DateTime(due.year, due.month, due.day);
-                  if (today.isAfter(dueDay)) {
-                    overdueStudentIds.add(studentId);
+                bool isOverdue = false;
+
+                if (data['installments'] != null && data['installments'] is List && (data['installments'] as List).isNotEmpty) {
+                  for (var inst in data['installments']) {
+                    if (inst['status'] == 'unpaid' || inst['status'] == 'pending_manual') {
+                      var instDueRaw = inst['dueDateRaw'] ?? data['dueDateRaw'];
+                      if (instDueRaw is Timestamp) {
+                        var due = instDueRaw.toDate();
+                        var dueDay = DateTime(due.year, due.month, due.day);
+                        if (today.isAfter(dueDay)) {
+                          isOverdue = true;
+                          break;
+                        }
+                      }
+                    }
                   }
+                } else {
+                  var dueDateRaw = data['dueDateRaw'];
+                  if (dueDateRaw is Timestamp) {
+                    var due = dueDateRaw.toDate();
+                    var dueDay = DateTime(due.year, due.month, due.day);
+                    if (today.isAfter(dueDay)) {
+                      isOverdue = true;
+                    }
+                  }
+                }
+
+                if (isOverdue) {
+                  overdueStudentIds.add(studentId);
                 }
               }
             }
@@ -2428,7 +2467,8 @@ class FirebaseService {
           
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        DateTime utcTime = DateTime.parse(data['dateTime']);
+        // timeapi.io doesn't append 'Z' for UTC, so Dart parses it as local. We must explicitly append 'Z'.
+        DateTime utcTime = DateTime.parse(data['dateTime'] + 'Z');
         DateTime localServerTime = utcTime.toLocal(); // Convert to device's local timezone
         _serverTimeOffset = localServerTime.difference(DateTime.now());
         return localServerTime;
