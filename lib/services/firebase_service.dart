@@ -1498,7 +1498,7 @@ class FirebaseService {
             if (pathParts.length >= 4) {
               String studentId = pathParts[3];
               
-              if (data['status'] == 'unpaid' && 
+              if ((data['status'] == 'unpaid' || data['status'] == 'pending_manual') && 
                   vMonth == currentMonth && 
                   activeClasses.contains(vClass) && 
                   vAdminId == user.uid &&
@@ -1552,7 +1552,7 @@ class FirebaseService {
             if (pathParts.length >= 4) {
               String studentId = pathParts[3];
 
-              if (data['status'] == 'unpaid' && 
+              if ((data['status'] == 'unpaid' || data['status'] == 'pending_manual') && 
                   vMonth == currentMonth && 
                   activeClasses.contains(vClass) && 
                   vAdminId == user.uid &&
@@ -2705,7 +2705,7 @@ class FirebaseService {
               .collection('students')
               .doc(finalStudentId)
               .collection('vouchers')
-              .where('status', isEqualTo: 'unpaid')
+              .where('status', whereIn: ['unpaid', 'pending_manual'])
               .limit(1)
               .get();
            
@@ -3977,7 +3977,7 @@ class FirebaseService {
       for (var studentDoc in studentsSnapshot.docs) {
         var unpaidVouchers = await studentDoc.reference
             .collection('vouchers')
-            .where('status', isEqualTo: 'unpaid')
+            .where('status', whereIn: ['unpaid', 'pending_manual'])
             .limit(1)
             .get();
 

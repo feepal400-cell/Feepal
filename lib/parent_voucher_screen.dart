@@ -174,7 +174,7 @@ class _ParentVoucherScreenState extends State<ParentVoucherScreen> {
                       }
                     }).toList();
 
-                    var unpaidVouchers = vouchers.where((v) => v['status'] == 'unpaid').toList();
+                    var unpaidVouchers = vouchers.where((v) => v['status'] == 'unpaid' || v['status'] == 'pending_manual').toList();
 
                     if (!_selectionInitialized && unpaidVouchers.isNotEmpty) {
                       _selectedVoucherId = unpaidVouchers.first['id'];

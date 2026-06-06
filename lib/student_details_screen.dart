@@ -362,7 +362,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     final baseFee = (data['baseFee'] ?? 0).toDouble();
     final additional = (data['additionalCharge'] ?? 0).toDouble();
     final penalty = (data['latePenalty'] ?? 0).toDouble();
-    final total = baseFee + additional + (status == 'unpaid' ? _calculatePenaltyIfOverdue(data) : (data['latePenaltyApplied'] ?? 0).toDouble());
+    final total = baseFee + additional + ((status == 'unpaid' || status == 'pending_manual') ? _calculatePenaltyIfOverdue(data) : (data['latePenaltyApplied'] ?? 0).toDouble());
     
     final installments = data['installments'] as List? ?? [];
     final isInstallment = installments.isNotEmpty;

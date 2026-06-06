@@ -63,7 +63,7 @@ class OcrService {
             if (vDate.isBefore(currentVoucherDate)) {
               // Check if it's unpaid
               final String status = voucher['status']?.toString().toLowerCase() ?? 'unpaid';
-              if (status == 'unpaid') {
+              if (status == 'unpaid' || status == 'pending_manual') {
                 return OcrValidationResult(
                   success: false,
                   errorMessage: "Error: Past dues must be cleared before paying current installments.",
@@ -75,7 +75,7 @@ class OcrService {
                 final List installments = voucher['installments'] as List;
                 bool hasUnpaidInstallment = installments.any((inst) {
                   final String instStatus = inst['status']?.toString().toLowerCase() ?? 'unpaid';
-                  return instStatus == 'unpaid';
+                  return instStatus == 'unpaid' || instStatus == 'pending_manual';
                 });
                 
                 if (hasUnpaidInstallment) {

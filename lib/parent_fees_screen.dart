@@ -342,7 +342,7 @@ class _ParentFeesScreenState extends State<ParentFeesScreen> {
                     List installments = v['installments'] as List? ?? [];
                     if (installments.isNotEmpty) {
                       double unpaidInst = installments
-                          .where((inst) => inst['status'] == 'unpaid')
+                          .where((inst) => inst['status'] == 'unpaid' || inst['status'] == 'pending_manual')
                           .fold(0.0, (s, inst) => s + (double.tryParse(inst['amount']?.toString() ?? '0') ?? 0.0));
                       return sum + unpaidInst;
                     }

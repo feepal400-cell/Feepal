@@ -517,14 +517,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         }
                       }).toList();
 
-                      unpaidCount = visibleVouchers.where((d) => (d.data() as Map)['status'] == 'unpaid').length;
+                      unpaidCount = visibleVouchers.where((d) {
+                        var status = (d.data() as Map)['status'];
+                        return status == 'unpaid' || status == 'pending_manual';
+                      }).length;
                       for (var doc in visibleVouchers) {
                         var vData = doc.data() as Map<String, dynamic>;
-                        if (vData['status'] == 'unpaid') {
+                        if (vData['status'] == 'unpaid' || vData['status'] == 'pending_manual') {
                           List installments = vData['installments'] as List? ?? [];
                           if (installments.isNotEmpty) {
                             double unpaidInst = installments
-                                .where((inst) => inst['status'] == 'unpaid')
+                                .where((inst) => inst['status'] == 'unpaid' || inst['status'] == 'pending_manual')
                                 .fold(0.0, (s, inst) => s + (double.tryParse(inst['amount']?.toString() ?? '0') ?? 0.0));
                             unpaidTotal += unpaidInst;
                           } else {
