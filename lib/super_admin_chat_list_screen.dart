@@ -8,7 +8,8 @@ class SuperAdminChatListScreen extends StatefulWidget {
   const SuperAdminChatListScreen({super.key});
 
   @override
-  State<SuperAdminChatListScreen> createState() => _SuperAdminChatListScreenState();
+  State<SuperAdminChatListScreen> createState() =>
+      _SuperAdminChatListScreenState();
 }
 
 class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
@@ -51,7 +52,9 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
                     ? allRooms
                     : allRooms.where((doc) {
                         var room = doc.data() as Map<String, dynamic>;
-                        String schoolName = (room['schoolName'] ?? '').toString().toLowerCase();
+                        String schoolName = (room['schoolName'] ?? '')
+                            .toString()
+                            .toLowerCase();
                         return schoolName.contains(_searchQuery.toLowerCase());
                       }).toList();
 
@@ -64,11 +67,18 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off_rounded, size: 48, color: Colors.grey[300]),
+                        Icon(
+                          Icons.search_off_rounded,
+                          size: 48,
+                          color: Colors.grey[300],
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           'No results for "$_searchQuery"',
-                          style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),
@@ -99,7 +109,12 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
   // ===== GRADIENT HEADER =====
   Widget _buildHeader() {
     return Container(
-      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 12, 20, 20),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 12,
+        20,
+        20,
+      ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF1A5CE8), Color(0xFF2979FF), Color(0xFF40C4FF)],
@@ -125,7 +140,11 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
             children: [
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 22),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
               const Expanded(
                 child: Text(
@@ -150,15 +169,22 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
                   }
                   if (totalUnread == 0) return const SizedBox();
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.mail_outline_rounded, color: Colors.white, size: 16),
+                        const Icon(
+                          Icons.mail_outline_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           '$totalUnread new',
@@ -179,9 +205,9 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
           // Search bar
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             child: TextField(
               controller: _searchController,
@@ -190,11 +216,21 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
               cursorColor: Colors.white,
               decoration: InputDecoration(
                 hintText: 'Search schools...',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14.5),
-                prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withOpacity(0.7)),
+                hintStyle: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  fontSize: 14.5,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: Colors.white.withValues(alpha: 0.7),
+                ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: Icon(Icons.close_rounded, color: Colors.white.withOpacity(0.7), size: 20),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: Colors.white.withValues(alpha: 0.7),
+                          size: 20,
+                        ),
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _searchQuery = '');
@@ -224,8 +260,8 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF2168F8).withOpacity(0.08),
-                  const Color(0xFF40C4FF).withOpacity(0.04),
+                  const Color(0xFF2168F8).withValues(alpha: 0.08),
+                  const Color(0xFF40C4FF).withValues(alpha: 0.04),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -249,10 +285,7 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
           const SizedBox(height: 8),
           Text(
             'When schools contact support, they\'ll appear here',
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 13,
-            ),
+            style: TextStyle(color: Colors.grey[400], fontSize: 13),
           ),
         ],
       ),
@@ -349,7 +382,8 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ChatScreen(roomId: roomId, schoolName: schoolName),
+                builder: (context) =>
+                    ChatScreen(roomId: roomId, schoolName: schoolName),
               ),
             );
           }
@@ -358,16 +392,21 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: hasUnread ? Colors.white : Colors.white.withOpacity(0.85),
+            color: hasUnread
+                ? Colors.white
+                : Colors.white.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(18),
             border: hasUnread
-                ? Border.all(color: const Color(0xFF2168F8).withOpacity(0.15), width: 1)
+                ? Border.all(
+                    color: const Color(0xFF2168F8).withValues(alpha: 0.15),
+                    width: 1,
+                  )
                 : null,
             boxShadow: [
               BoxShadow(
                 color: hasUnread
-                    ? const Color(0xFF2168F8).withOpacity(0.08)
-                    : Colors.black.withOpacity(0.03),
+                    ? const Color(0xFF2168F8).withValues(alpha: 0.08)
+                    : Colors.black.withValues(alpha: 0.03),
                 blurRadius: hasUnread ? 16 : 10,
                 offset: const Offset(0, 4),
               ),
@@ -383,23 +422,30 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF2168F8).withOpacity(0.12),
-                      const Color(0xFF40C4FF).withOpacity(0.08),
+                      const Color(0xFF2168F8).withValues(alpha: 0.12),
+                      const Color(0xFF40C4FF).withValues(alpha: 0.08),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   border: Border.all(
-                    color: const Color(0xFF2168F8).withOpacity(0.1),
+                    color: const Color(0xFF2168F8).withValues(alpha: 0.1),
                     width: 1.5,
                   ),
                   image: (logo != null && logo.isNotEmpty)
-                      ? DecorationImage(image: NetworkImage(logo), fit: BoxFit.cover)
+                      ? DecorationImage(
+                          image: NetworkImage(logo),
+                          fit: BoxFit.cover,
+                        )
                       : null,
                 ),
                 child: (logo == null || logo.isEmpty)
                     ? const Center(
-                        child: Icon(Icons.school_rounded, color: Color(0xFF2168F8), size: 26),
+                        child: Icon(
+                          Icons.school_rounded,
+                          color: Color(0xFF2168F8),
+                          size: 26,
+                        ),
                       )
                     : null,
               ),
@@ -419,7 +465,9 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
                                 child: Text(
                                   schoolName,
                                   style: TextStyle(
-                                    fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
+                                    fontWeight: hasUnread
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
                                     fontSize: 15,
                                     color: const Color(0xFF1E293B),
                                   ),
@@ -432,7 +480,9 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
                                   height: 6,
                                   width: 6,
                                   decoration: const BoxDecoration(
-                                    color: Color(0xFF2168F8), // Matching theme color for SA
+                                    color: Color(
+                                      0xFF2168F8,
+                                    ), // Matching theme color for SA
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -443,8 +493,12 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
                           timeStr,
                           style: TextStyle(
                             fontSize: 11,
-                            color: hasUnread ? const Color(0xFF2168F8) : Colors.grey[400],
-                            fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
+                            color: hasUnread
+                                ? const Color(0xFF2168F8)
+                                : Colors.grey[400],
+                            fontWeight: hasUnread
+                                ? FontWeight.w600
+                                : FontWeight.w400,
                           ),
                         ),
                       ],
@@ -459,15 +513,22 @@ class _SuperAdminChatListScreenState extends State<SuperAdminChatListScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 13,
-                              color: hasUnread ? Colors.grey[700] : Colors.grey[400],
-                              fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
+                              color: hasUnread
+                                  ? Colors.grey[700]
+                                  : Colors.grey[400],
+                              fontWeight: hasUnread
+                                  ? FontWeight.w500
+                                  : FontWeight.w400,
                             ),
                           ),
                         ),
                         if (unreadCount > 0) ...[
                           const SizedBox(width: 10),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [Color(0xFF1A5CE8), Color(0xFF2979FF)],

@@ -185,18 +185,36 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: (student['parentStatus'] == 'Priority' ? Colors.orange : Colors.blue).withOpacity(0.1),
+                                color:
+                                    (student['parentStatus'] == 'Priority'
+                                            ? Colors.orange
+                                            : Colors.blue)
+                                        .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: (student['parentStatus'] == 'Priority' ? Colors.orange : Colors.blue).withOpacity(0.3)),
+                                border: Border.all(
+                                  color:
+                                      (student['parentStatus'] == 'Priority'
+                                              ? Colors.orange
+                                              : Colors.blue)
+                                          .withValues(alpha: 0.3),
+                                ),
                               ),
                               child: Text(
-                                Translations.get(student['parentStatus'] ?? 'Standard', isUrdu),
+                                Translations.get(
+                                  student['parentStatus'] ?? 'Standard',
+                                  isUrdu,
+                                ),
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: student['parentStatus'] == 'Priority' ? Colors.orange : Colors.blue,
+                                  color: student['parentStatus'] == 'Priority'
+                                      ? Colors.orange
+                                      : Colors.blue,
                                 ),
                               ),
                             ),
@@ -236,7 +254,9 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2168F8).withOpacity(0.1),
+                                color: const Color(
+                                  0xFF2168F8,
+                                ).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(
@@ -363,7 +383,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
             suffixText: suffix,
             suffixIcon: suffixIcon,
             filled: isError,
-            fillColor: isError ? Colors.red.withOpacity(0.1) : null,
+            fillColor: isError ? Colors.red.withValues(alpha: 0.1) : null,
             suffixStyle: const TextStyle(color: Colors.black45, fontSize: 12),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 20,
@@ -431,7 +451,9 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
     bool smsAlertsEnabled = false;
     if (isEditing) {
       final prefs = studentData['notificationPreferences'] as Map?;
-      smsAlertsEnabled = prefs?['sms'] == true || studentData['notifications_preference'] == 'SMS Alerts';
+      smsAlertsEnabled =
+          prefs?['sms'] == true ||
+          studentData['notifications_preference'] == 'SMS Alerts';
     }
 
     showModalBottomSheet(
@@ -523,7 +545,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                               color:
                                   (_triedSubmit &&
                                       _classController.text.isEmpty)
-                                  ? Colors.red.withOpacity(0.1)
+                                  ? Colors.red.withValues(alpha: 0.1)
                                   : null,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
@@ -709,8 +731,15 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                         Padding(
                           padding: const EdgeInsets.only(top: 8, left: 4),
                           child: Text(
-                            Translations.get('Priority parents will be reminded twice in a week.', isUrdu),
-                            style: TextStyle(fontSize: 12, color: Colors.blue.shade700, fontWeight: FontWeight.w500),
+                            Translations.get(
+                              'Priority parents will be reminded twice in a week.',
+                              isUrdu,
+                            ),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       const SizedBox(height: 15),
@@ -779,7 +808,10 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
 
                       // SMS Alert Toggle
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 15,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(12),
@@ -793,13 +825,19 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: smsAlertsEnabled ? const Color(0xFF2168F8).withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                                    color: smsAlertsEnabled
+                                        ? const Color(
+                                            0xFF2168F8,
+                                          ).withValues(alpha: 0.1)
+                                        : Colors.grey.withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
                                     Icons.sms_outlined,
                                     size: 20,
-                                    color: smsAlertsEnabled ? const Color(0xFF2168F8) : Colors.grey,
+                                    color: smsAlertsEnabled
+                                        ? const Color(0xFF2168F8)
+                                        : Colors.grey,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -807,7 +845,10 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      Translations.get('Send SMS Alert', isUrdu),
+                                      Translations.get(
+                                        'Send SMS Alert',
+                                        isUrdu,
+                                      ),
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -815,9 +856,15 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                       ),
                                     ),
                                     Text(
-                                      smsAlertsEnabled 
-                                        ? Translations.get('SMS prioritized over Email', isUrdu)
-                                        : Translations.get('Email Alert active by default', isUrdu),
+                                      smsAlertsEnabled
+                                          ? Translations.get(
+                                              'SMS prioritized over Email',
+                                              isUrdu,
+                                            )
+                                          : Translations.get(
+                                              'Email Alert active by default',
+                                              isUrdu,
+                                            ),
                                       style: TextStyle(
                                         fontSize: 11,
                                         color: Colors.grey[500],
@@ -897,7 +944,9 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                     'parentStatus': selectedParentStatus,
                                     'parentPassword':
                                         _parentPasswordController.text,
-                                    'notifications_preference': smsAlertsEnabled ? 'SMS Alerts' : 'Email Alerts',
+                                    'notifications_preference': smsAlertsEnabled
+                                        ? 'SMS Alerts'
+                                        : 'Email Alerts',
                                     'notificationPreferences': {
                                       'sms': smsAlertsEnabled,
                                       'email': !smsAlertsEnabled,
@@ -1147,7 +1196,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                         border: Border.all(color: Colors.grey.shade300),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -1160,30 +1209,71 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.grey.shade100,
-                              borderRadius: const BorderRadius.only(topLeft: Radius.circular(11), topRight: Radius.circular(11)),
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(11),
+                                topRight: Radius.circular(11),
+                              ),
                             ),
                             child: Row(
-                              children: ['A', 'B', 'C', 'D', 'E', 'F'].map((label) => Container(
-                                width: 120,
-                                padding: const EdgeInsets.symmetric(vertical: 5),
-                                decoration: BoxDecoration(
-                                  border: Border(right: BorderSide(color: Colors.grey.shade300)),
-                                ),
-                                child: Text(label, textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.bold)),
-                              )).toList(),
+                              children: ['A', 'B', 'C', 'D', 'E', 'F']
+                                  .map(
+                                    (label) => Container(
+                                      width: 120,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          right: BorderSide(
+                                            color: Colors.grey.shade300,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        label,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.grey.shade600,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                             ),
                           ),
                           // Header Row
                           Container(
-                            color: const Color(0xFF2168F8).withOpacity(0.05),
+                            color: const Color(
+                              0xFF2168F8,
+                            ).withValues(alpha: 0.05),
                             child: Row(
                               children: [
-                                _buildExcelHeader(Translations.get('Roll Number', isUrdu), isUrdu),
-                                _buildExcelHeader(Translations.get('Student Name', isUrdu), isUrdu),
-                                _buildExcelHeader(Translations.get('Class', isUrdu), isUrdu),
-                                _buildExcelHeader(Translations.get('Parent Name', isUrdu), isUrdu),
-                                _buildExcelHeader(Translations.get('Parent Phone', isUrdu), isUrdu),
-                                _buildExcelHeader(Translations.get('Parent Email', isUrdu), isUrdu),
+                                _buildExcelHeader(
+                                  Translations.get('Roll Number', isUrdu),
+                                  isUrdu,
+                                ),
+                                _buildExcelHeader(
+                                  Translations.get('Student Name', isUrdu),
+                                  isUrdu,
+                                ),
+                                _buildExcelHeader(
+                                  Translations.get('Class', isUrdu),
+                                  isUrdu,
+                                ),
+                                _buildExcelHeader(
+                                  Translations.get('Parent Name', isUrdu),
+                                  isUrdu,
+                                ),
+                                _buildExcelHeader(
+                                  Translations.get('Parent Phone', isUrdu),
+                                  isUrdu,
+                                ),
+                                _buildExcelHeader(
+                                  Translations.get('Parent Email', isUrdu),
+                                  isUrdu,
+                                ),
                               ],
                             ),
                           ),
@@ -1795,22 +1885,46 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
 
                                     // 2. Natural Numeric Sorting for Classes (Ensures Class 10 is at the end)
                                     filteredDocs.sort((a, b) {
-                                      var dataA = a.data() as Map<String, dynamic>;
-                                      var dataB = b.data() as Map<String, dynamic>;
-                                      
-                                      String classA = (dataA['class'] ?? '').toString();
-                                      String classB = (dataB['class'] ?? '').toString();
-                                      
-                                      int numA = int.tryParse(classA.replaceAll(RegExp(r'\D'), '')) ?? 0;
-                                      int numB = int.tryParse(classB.replaceAll(RegExp(r'\D'), '')) ?? 0;
-                                      
+                                      var dataA =
+                                          a.data() as Map<String, dynamic>;
+                                      var dataB =
+                                          b.data() as Map<String, dynamic>;
+
+                                      String classA = (dataA['class'] ?? '')
+                                          .toString();
+                                      String classB = (dataB['class'] ?? '')
+                                          .toString();
+
+                                      int numA =
+                                          int.tryParse(
+                                            classA.replaceAll(
+                                              RegExp(r'\D'),
+                                              '',
+                                            ),
+                                          ) ??
+                                          0;
+                                      int numB =
+                                          int.tryParse(
+                                            classB.replaceAll(
+                                              RegExp(r'\D'),
+                                              '',
+                                            ),
+                                          ) ??
+                                          0;
+
                                       if (numA != numB) {
                                         return numA.compareTo(numB);
                                       }
-                                      
+
                                       // If classes are same, sort by name
-                                      String nameA = (dataA['studentName'] ?? '').toString().toLowerCase();
-                                      String nameB = (dataB['studentName'] ?? '').toString().toLowerCase();
+                                      String nameA =
+                                          (dataA['studentName'] ?? '')
+                                              .toString()
+                                              .toLowerCase();
+                                      String nameB =
+                                          (dataB['studentName'] ?? '')
+                                              .toString()
+                                              .toLowerCase();
                                       return nameA.compareTo(nameB);
                                     });
 
@@ -1855,7 +1969,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                               boxShadow: [
                                                 BoxShadow(
                                                   color: Colors.black
-                                                      .withOpacity(0.05),
+                                                      .withValues(alpha: 0.05),
                                                   blurRadius: 5,
                                                 ),
                                               ],
@@ -1968,7 +2082,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                                       _currentPage > 1
                                                       ? const Color(
                                                           0xFF2168F8,
-                                                        ).withOpacity(0.1)
+                                                        ).withValues(alpha: 0.1)
                                                       : Colors.grey[100],
                                                   foregroundColor:
                                                       _currentPage > 1
@@ -2000,7 +2114,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                                       _currentPage < totalPages
                                                       ? const Color(
                                                           0xFF2168F8,
-                                                        ).withOpacity(0.1)
+                                                        ).withValues(alpha: 0.1)
                                                       : Colors.grey[100],
                                                   foregroundColor:
                                                       _currentPage < totalPages

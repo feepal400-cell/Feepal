@@ -74,11 +74,19 @@ class _ChangePasswordOTPScreenState extends State<ChangePasswordOTPScreen>
       case 'Wrong OTP Code':
         return Translations.get('Wrong OTP Code', isUrdu);
       case 'network-request-failed':
-        return Translations.get("Network error. Please check your internet connection.", isUrdu);
+        return Translations.get(
+          "Network error. Please check your internet connection.",
+          isUrdu,
+        );
       case 'too-many-requests':
-        return Translations.get("Too many attempts. Please try again later.", isUrdu);
+        return Translations.get(
+          "Too many attempts. Please try again later.",
+          isUrdu,
+        );
       default:
-        return code.contains('/') ? Translations.get("Verification failed. Please try again.", isUrdu) : code;
+        return code.contains('/')
+            ? Translations.get("Verification failed. Please try again.", isUrdu)
+            : code;
     }
   }
 
@@ -162,7 +170,9 @@ class _ChangePasswordOTPScreenState extends State<ChangePasswordOTPScreen>
             _showSuccessDialog(isUrdu);
           }
         } else {
-          _showErrorBanner(Translations.get('Failed to update password.', isUrdu));
+          _showErrorBanner(
+            Translations.get('Failed to update password.', isUrdu),
+          );
         }
       } else {
         _showErrorBanner(_mapErrorCode('invalid-otp', isUrdu));
@@ -217,9 +227,20 @@ class _ChangePasswordOTPScreenState extends State<ChangePasswordOTPScreen>
       SnackBar(
         content: Row(
           children: [
-            Icon(isError ? Icons.error_outline : Icons.check_circle_outline, color: Colors.white),
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+            ),
             const SizedBox(width: 12),
-            Expanded(child: Text(msg, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+            Expanded(
+              child: Text(
+                msg,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
         backgroundColor: isError ? Colors.redAccent : Colors.green,
@@ -249,152 +270,157 @@ class _ChangePasswordOTPScreenState extends State<ChangePasswordOTPScreen>
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: gradientColors,
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    _buildTopBar(isUrdu),
-                    Expanded(
-                      child: Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.fromLTRB(24, 10, 24, 20),
-                        padding: const EdgeInsets.all(25.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 30),
-                              const Icon(
-                                Icons.mark_email_read_outlined,
-                                size: 80,
-                                color: Colors.blue,
-                              ),
-                              const SizedBox(height: 30),
-                              Text(
-                                Translations.get('Verify OTP', isUrdu),
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: gradientColors[0],
-                                ),
-                              ),
-                              const SizedBox(height: 15),
-                              Text(
-                                Translations.get(
-                                      'Please enter the 6-digit code sent to ',
-                                      isUrdu,
-                                    ) +
-                                    widget.email,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 40),
-
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: List.generate(
-                                  6,
-                                  (index) => _buildOTPField(index),
-                                ),
-                              ),
-
-                              const SizedBox(height: 40),
-
-                              SizedBox(
-                                width: double.infinity,
-                                height: 60,
-                                child: ElevatedButton(
-                                  onPressed: _isLoading ? null : _verifyOTP,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: gradientColors[0],
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
+                    gradient: LinearGradient(
+                      colors: gradientColors,
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        _buildTopBar(isUrdu),
+                        Expanded(
+                          child: Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.fromLTRB(24, 10, 24, 20),
+                            padding: const EdgeInsets.all(25.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  const SizedBox(height: 30),
+                                  const Icon(
+                                    Icons.mark_email_read_outlined,
+                                    size: 80,
+                                    color: Colors.blue,
+                                  ),
+                                  const SizedBox(height: 30),
+                                  Text(
+                                    Translations.get('Verify OTP', isUrdu),
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: gradientColors[0],
                                     ),
                                   ),
-                                  child: _isLoading
-                                      ? const CircularProgressIndicator(
-                                          color: Colors.white,
-                                        )
-                                      : Text(
-                                          Translations.get(
-                                            'Verify Now',
-                                            isUrdu,
-                                          ),
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 30),
-
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
+                                  const SizedBox(height: 15),
                                   Text(
                                     Translations.get(
-                                      "Didn't receive code? ",
-                                      isUrdu,
-                                    ),
+                                          'Please enter the 6-digit code sent to ',
+                                          isUrdu,
+                                        ) +
+                                        widget.email,
+                                    textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       color: Colors.black54,
+                                      fontSize: 14,
                                     ),
                                   ),
-                                  _resendTimer > 0
-                                      ? Text(
-                                          "${Translations.get('Resend in', isUrdu)} ${_resendTimer}s",
-                                          style: const TextStyle(
-                                            color: Colors.blue,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        )
-                                      : GestureDetector(
-                                          onTap: () {
-                                            final bool isParentVal =
-                                                widget.role == 'parent';
-                                            final student = _firebaseService
-                                                .selectedStudent;
-                                            _startTimer();
-                                            _firebaseService.sendOTP(
-                                              email: widget.email,
-                                              uid: widget.uid,
-                                              isParent: isParentVal,
-                                              adminId: widget.adminId,
-                                            );
-                                          },
-                                          child: Text(
-                                            Translations.get('Resend', isUrdu),
-                                            style: const TextStyle(
-                                              color: Colors.blue,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                  const SizedBox(height: 40),
+
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(
+                                      6,
+                                      (index) => _buildOTPField(index),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 40),
+
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 60,
+                                    child: ElevatedButton(
+                                      onPressed: _isLoading ? null : _verifyOTP,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: gradientColors[0],
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            15,
                                           ),
                                         ),
+                                      ),
+                                      child: _isLoading
+                                          ? const CircularProgressIndicator(
+                                              color: Colors.white,
+                                            )
+                                          : Text(
+                                              Translations.get(
+                                                'Verify Now',
+                                                isUrdu,
+                                              ),
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 30),
+
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        Translations.get(
+                                          "Didn't receive code? ",
+                                          isUrdu,
+                                        ),
+                                        style: const TextStyle(
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                      _resendTimer > 0
+                                          ? Text(
+                                              "${Translations.get('Resend in', isUrdu)} ${_resendTimer}s",
+                                              style: const TextStyle(
+                                                color: Colors.blue,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            )
+                                          : GestureDetector(
+                                              onTap: () {
+                                                final bool isParentVal =
+                                                    widget.role == 'parent';
+                                                final student = _firebaseService
+                                                    .selectedStudent;
+                                                _startTimer();
+                                                _firebaseService.sendOTP(
+                                                  email: widget.email,
+                                                  uid: widget.uid,
+                                                  isParent: isParentVal,
+                                                  adminId: widget.adminId,
+                                                );
+                                              },
+                                              child: Text(
+                                                Translations.get(
+                                                  'Resend',
+                                                  isUrdu,
+                                                ),
+                                                style: const TextStyle(
+                                                  color: Colors.blue,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                    ],
+                                  ),
                                 ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
                 _topBannerNotifier(),
               ],
             ),
@@ -413,7 +439,7 @@ class _ChangePasswordOTPScreenState extends State<ChangePasswordOTPScreen>
             height: 45,
             width: 45,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(15),
             ),
             child: IconButton(
@@ -493,17 +519,24 @@ class _ChangePasswordOTPScreenState extends State<ChangePasswordOTPScreen>
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.redAccent.withOpacity(0.2), width: 1.5),
+            border: Border.all(
+              color: Colors.redAccent.withValues(alpha: 0.2),
+              width: 1.5,
+            ),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.redAccent.withOpacity(0.1),
+                  color: Colors.redAccent.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.error_rounded, color: Colors.redAccent, size: 24),
+                child: const Icon(
+                  Icons.error_rounded,
+                  color: Colors.redAccent,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 15),
               Expanded(
@@ -523,7 +556,7 @@ class _ChangePasswordOTPScreenState extends State<ChangePasswordOTPScreen>
                     Text(
                       _bannerMessage ?? "",
                       style: TextStyle(
-                        color: Colors.redAccent.withOpacity(0.8),
+                        color: Colors.redAccent.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w500,
                         fontSize: 13,
                       ),
@@ -532,7 +565,11 @@ class _ChangePasswordOTPScreenState extends State<ChangePasswordOTPScreen>
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close_rounded, size: 22, color: Colors.redAccent),
+                icon: const Icon(
+                  Icons.close_rounded,
+                  size: 22,
+                  color: Colors.redAccent,
+                ),
                 onPressed: () => setState(() => _showBanner = false),
               ),
             ],

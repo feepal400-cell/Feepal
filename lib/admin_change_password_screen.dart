@@ -6,46 +6,51 @@ import 'language_config.dart';
 import 'services/firebase_service.dart';
 import 'login_screen.dart';
 
-enum AdminPasswordFlowState {
-  initial,
-  otpSent,
-  otpVerified,
-}
+enum AdminPasswordFlowState { initial, otpSent, otpVerified }
 
 class AdminChangePasswordScreen extends StatefulWidget {
   const AdminChangePasswordScreen({super.key});
 
   @override
-  State<AdminChangePasswordScreen> createState() => _AdminChangePasswordScreenState();
+  State<AdminChangePasswordScreen> createState() =>
+      _AdminChangePasswordScreenState();
 }
 
-class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> with WidgetsBindingObserver {
+class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen>
+    with WidgetsBindingObserver {
   final FirebaseService _firebaseService = FirebaseService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
   AdminPasswordFlowState _flowState = AdminPasswordFlowState.initial;
-  
+
   // Input Controllers
-  final List<TextEditingController> _otpControllers = List.generate(6, (index) => TextEditingController());
-  final List<FocusNode> _otpFocusNodes = List.generate(6, (index) => FocusNode());
-  
+  final List<TextEditingController> _otpControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+  final List<FocusNode> _otpFocusNodes = List.generate(
+    6,
+    (index) => FocusNode(),
+  );
+
   final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
   bool _obscureNew = true;
   bool _obscureConfirm = true;
   bool _isLoading = false;
-  
+
   String? _adminEmail;
   String? _adminUid;
-  
+
   int _resendTimer = 60;
   Timer? _timer;
 
   // Error Handling State
   String? _bannerMessage;
   bool _showBanner = false;
-  
+
   String? _newError;
   String? _confirmError;
 
@@ -73,7 +78,8 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _flowState == AdminPasswordFlowState.otpSent) {
+    if (state == AppLifecycleState.resumed &&
+        _flowState == AdminPasswordFlowState.otpSent) {
       _checkClipboardForOTP();
     }
   }
@@ -137,19 +143,35 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
       case 'Wrong OTP Code':
         return Translations.get('Wrong OTP Code', isUrdu);
       case 'network-request-failed':
-        return Translations.get("Network error. Please check your internet connection.", isUrdu);
+        return Translations.get(
+          "Network error. Please check your internet connection.",
+          isUrdu,
+        );
       case 'too-many-requests':
-        return Translations.get("Too many attempts. Please try again later.", isUrdu);
+        return Translations.get(
+          "Too many attempts. Please try again later.",
+          isUrdu,
+        );
       case 'requires-recent-login':
-        return Translations.get("Session expired. Please re-authenticate.", isUrdu);
+        return Translations.get(
+          "Session expired. Please re-authenticate.",
+          isUrdu,
+        );
       default:
-        return code.contains('/') ? Translations.get("Operation failed. Please try again.", isUrdu) : code;
+        return code.contains('/')
+            ? Translations.get("Operation failed. Please try again.", isUrdu)
+            : code;
     }
   }
 
   Future<void> _sendOTP() async {
     if (_adminEmail == null || _adminUid == null) {
-      _showErrorBanner(Translations.get('User info not found. Please log out and log in again.', languageNotifier.value));
+      _showErrorBanner(
+        Translations.get(
+          'User info not found. Please log out and log in again.',
+          languageNotifier.value,
+        ),
+      );
       return;
     }
 
@@ -174,7 +196,12 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
         });
         _startTimer();
       } else {
-        _showErrorBanner(Translations.get('Failed to send OTP. Please try again.', languageNotifier.value));
+        _showErrorBanner(
+          Translations.get(
+            'Failed to send OTP. Please try again.',
+            languageNotifier.value,
+          ),
+        );
       }
     }
   }
@@ -187,7 +214,7 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
       _isLoading = true;
       _showBanner = false;
     });
-    
+
     final isUrdu = languageNotifier.value;
 
     try {
@@ -277,14 +304,16 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
     } catch (e) {
       debugPrint("Logout error after password change: $e");
     }
-    
+
     if (mounted) {
       setState(() => _isLoading = false);
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Text(
             Translations.get('Password Changed!', isUrdu),
             style: const TextStyle(
@@ -318,7 +347,8 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
   }
 
   void _promptForReauthentication(bool isUrdu, String newPass) {
-    final TextEditingController currentPasswordController = TextEditingController();
+    final TextEditingController currentPasswordController =
+        TextEditingController();
     bool isDialogLoading = false;
     String? dialogError;
 
@@ -329,7 +359,9 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               title: Text(
                 Translations.get('Session Expired', isUrdu),
                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -339,7 +371,10 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    Translations.get('Please enter your current password to confirm your identity.', isUrdu),
+                    Translations.get(
+                      'Please enter your current password to confirm your identity.',
+                      isUrdu,
+                    ),
                     style: const TextStyle(fontSize: 14),
                   ),
                   const SizedBox(height: 20),
@@ -361,7 +396,9 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
               ),
               actions: [
                 TextButton(
-                  onPressed: isDialogLoading ? null : () => Navigator.pop(dialogContext),
+                  onPressed: isDialogLoading
+                      ? null
+                      : () => Navigator.pop(dialogContext),
                   child: Text(
                     Translations.get('Cancel', isUrdu),
                     style: const TextStyle(color: Colors.grey),
@@ -373,7 +410,12 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
                       : () async {
                           final currentPass = currentPasswordController.text;
                           if (currentPass.isEmpty) {
-                            setDialogState(() => dialogError = Translations.get('Password is required', isUrdu));
+                            setDialogState(
+                              () => dialogError = Translations.get(
+                                'Password is required',
+                                isUrdu,
+                              ),
+                            );
                             return;
                           }
 
@@ -383,25 +425,31 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
                           });
 
                           try {
-                            AuthCredential credential = EmailAuthProvider.credential(
-                              email: _adminEmail!,
-                              password: currentPass,
-                            );
-                            await _auth.currentUser!.reauthenticateWithCredential(credential);
-                            
+                            AuthCredential credential =
+                                EmailAuthProvider.credential(
+                                  email: _adminEmail!,
+                                  password: currentPass,
+                                );
+                            await _auth.currentUser!
+                                .reauthenticateWithCredential(credential);
+
                             // Re-authentication successful, now retry updating password
                             await _auth.currentUser!.updatePassword(newPass);
-                            
+
                             if (dialogContext.mounted) {
                               Navigator.pop(dialogContext); // close dialog
                             }
-                            
+
                             await _handleSuccessfulUpdate(isUrdu);
                           } on FirebaseAuthException catch (e) {
                             setDialogState(() {
                               isDialogLoading = false;
-                              if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
-                                dialogError = Translations.get('Incorrect current password.', isUrdu);
+                              if (e.code == 'wrong-password' ||
+                                  e.code == 'invalid-credential') {
+                                dialogError = Translations.get(
+                                  'Incorrect current password.',
+                                  isUrdu,
+                                );
                               } else {
                                 dialogError = _mapErrorCode(e.code, isUrdu);
                               }
@@ -409,19 +457,27 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
                           } catch (e) {
                             setDialogState(() {
                               isDialogLoading = false;
-                              dialogError = Translations.get('Operation failed. Please try again.', isUrdu);
+                              dialogError = Translations.get(
+                                'Operation failed. Please try again.',
+                                isUrdu,
+                              );
                             });
                           }
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2168F8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   child: isDialogLoading
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : Text(
                           Translations.get('Verify & Update', isUrdu),
@@ -469,10 +525,10 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
                               borderRadius: BorderRadius.circular(30),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 20,
                                   offset: const Offset(0, 10),
-                                )
+                                ),
                               ],
                             ),
                             child: SingleChildScrollView(
@@ -499,9 +555,10 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
       child: Row(
         children: [
           Container(
-            height: 45, width: 45,
+            height: 45,
+            width: 45,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(15),
             ),
             child: IconButton(
@@ -512,7 +569,11 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
           const SizedBox(width: 15),
           Text(
             Translations.get('Change Password', isUrdu),
-            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -535,19 +596,34 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
       children: [
         const SizedBox(height: 20),
         const Center(
-          child: Icon(Icons.mark_email_read_outlined, size: 80, color: Color(0xFF2168F8)),
+          child: Icon(
+            Icons.mark_email_read_outlined,
+            size: 80,
+            color: Color(0xFF2168F8),
+          ),
         ),
         const SizedBox(height: 30),
         Text(
           Translations.get('Email Verification Required', isUrdu),
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF2168F8)),
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2168F8),
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 15),
         Text(
-          Translations.get('To securely change your password, we need to verify your identity. We will send a One-Time Password (OTP) to your registered email: ', isUrdu) + 
-          (_adminEmail ?? 'your email'),
-          style: const TextStyle(fontSize: 14, color: Colors.black54, height: 1.5),
+          Translations.get(
+                'To securely change your password, we need to verify your identity. We will send a One-Time Password (OTP) to your registered email: ',
+                isUrdu,
+              ) +
+              (_adminEmail ?? 'your email'),
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black54,
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: 40),
         _buildPrimaryButton(
@@ -564,15 +640,24 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const SizedBox(height: 20),
-        const Icon(Icons.lock_clock_outlined, size: 80, color: Color(0xFF2168F8)),
+        const Icon(
+          Icons.lock_clock_outlined,
+          size: 80,
+          color: Color(0xFF2168F8),
+        ),
         const SizedBox(height: 30),
         Text(
           Translations.get('Verify OTP', isUrdu),
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF2168F8)),
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2168F8),
+          ),
         ),
         const SizedBox(height: 15),
         Text(
-          Translations.get('Please enter the 6-digit code sent to ', isUrdu) + (_adminEmail ?? ''),
+          Translations.get('Please enter the 6-digit code sent to ', isUrdu) +
+              (_adminEmail ?? ''),
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.black54, fontSize: 14),
         ),
@@ -598,13 +683,19 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
             _resendTimer > 0
                 ? Text(
                     "${Translations.get('Resend in', isUrdu)} ${_resendTimer}s",
-                    style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
                   )
                 : GestureDetector(
                     onTap: _sendOTP,
                     child: Text(
                       Translations.get('Resend', isUrdu),
-                      style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
           ],
@@ -620,15 +711,22 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
         const SizedBox(height: 20),
         Text(
           Translations.get('Set New Password', isUrdu),
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF2168F8)),
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2168F8),
+          ),
         ),
         const SizedBox(height: 10),
         Text(
-          Translations.get('Your identity has been verified. You can now set a new password.', isUrdu),
+          Translations.get(
+            'Your identity has been verified. You can now set a new password.',
+            isUrdu,
+          ),
           style: const TextStyle(fontSize: 14, color: Colors.black54),
         ),
         const SizedBox(height: 40),
-        
+
         _buildTextField(
           controller: _newPasswordController,
           label: Translations.get('New Password', isUrdu),
@@ -643,7 +741,7 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
           ),
         ),
         const SizedBox(height: 20),
-        
+
         _buildTextField(
           controller: _confirmPasswordController,
           label: Translations.get('Confirm New Password', isUrdu),
@@ -653,13 +751,15 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
           errorText: _confirmError,
           onChanged: (v) => _validateNewPassword(isUrdu),
           suffixIcon: IconButton(
-            icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
+            icon: Icon(
+              _obscureConfirm ? Icons.visibility_off : Icons.visibility,
+            ),
             onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
           ),
         ),
-        
+
         const SizedBox(height: 40),
-        
+
         _buildPrimaryButton(
           text: Translations.get('Update Password', isUrdu),
           color: const Color(0xFF2168F8),
@@ -724,7 +824,14 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -739,9 +846,12 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
             errorStyle: const TextStyle(height: 0.8),
             filled: true,
             fillColor: Colors.grey[50],
-            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 15),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 18,
+              horizontal: 15,
+            ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15), 
+              borderRadius: BorderRadius.circular(15),
               borderSide: BorderSide.none,
             ),
             errorBorder: OutlineInputBorder(
@@ -758,7 +868,11 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
     );
   }
 
-  Widget _buildPrimaryButton({required String text, required Color color, required VoidCallback onPressed}) {
+  Widget _buildPrimaryButton({
+    required String text,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
     return SizedBox(
       width: double.infinity,
       height: 60,
@@ -767,12 +881,20 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
           elevation: 0,
         ),
-        child: _isLoading 
-          ? const CircularProgressIndicator(color: Colors.white)
-          : Text(text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        child: _isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }
@@ -793,17 +915,24 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.redAccent.withOpacity(0.2), width: 1.5),
+            border: Border.all(
+              color: Colors.redAccent.withValues(alpha: 0.2),
+              width: 1.5,
+            ),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.redAccent.withOpacity(0.1),
+                  color: Colors.redAccent.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.error_rounded, color: Colors.redAccent, size: 24),
+                child: const Icon(
+                  Icons.error_rounded,
+                  color: Colors.redAccent,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 15),
               Expanded(
@@ -823,7 +952,7 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
                     Text(
                       _bannerMessage ?? "",
                       style: TextStyle(
-                        color: Colors.redAccent.withOpacity(0.8),
+                        color: Colors.redAccent.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w500,
                         fontSize: 13,
                       ),
@@ -832,7 +961,11 @@ class _AdminChangePasswordScreenState extends State<AdminChangePasswordScreen> w
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close_rounded, size: 22, color: Colors.redAccent),
+                icon: const Icon(
+                  Icons.close_rounded,
+                  size: 22,
+                  color: Colors.redAccent,
+                ),
                 onPressed: () => setState(() => _showBanner = false),
               ),
             ],

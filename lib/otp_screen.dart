@@ -22,10 +22,13 @@ class OTPScreen extends StatefulWidget {
 }
 
 class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
-  final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   final FirebaseService _firebaseService = FirebaseService();
-  
+
   bool _isLoading = false;
   int _resendTimer = 60;
   Timer? _timer;
@@ -39,8 +42,8 @@ class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
     _startTimer();
     // Send initial OTP
     _firebaseService.sendOTP(
-      email: widget.email, 
-      uid: widget.uid, 
+      email: widget.email,
+      uid: widget.uid,
       reason: 'account registration',
     );
   }
@@ -68,7 +71,7 @@ class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
   Future<void> _checkClipboardForOTP() async {
     final data = await Clipboard.getData('text/plain');
     final text = data?.text?.trim() ?? '';
-    
+
     // If it's exactly 6 digits, auto-paste and verify
     if (RegExp(r'^\d{6}$').hasMatch(text)) {
       setState(() {
@@ -109,7 +112,7 @@ class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
     });
 
     final result = await _firebaseService.verifyOTP(
-      uid: widget.uid, 
+      uid: widget.uid,
       code: otp,
       markAsVerified: true,
     );
@@ -120,7 +123,8 @@ class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => SubscriptionScreen(adminData: widget.adminData),
+            builder: (context) =>
+                SubscriptionScreen(adminData: widget.adminData),
           ),
           (route) => false,
         );
@@ -134,14 +138,14 @@ class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
 
   Future<void> _handleResend() async {
     if (!_canResend) return;
-    
+
     setState(() => _isLoading = true);
     bool success = await _firebaseService.sendOTP(
-      email: widget.email, 
-      uid: widget.uid, 
+      email: widget.email,
+      uid: widget.uid,
       reason: 'account registration',
     );
-    
+
     if (mounted) {
       setState(() => _isLoading = false);
       if (success) {
@@ -152,12 +156,25 @@ class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
               children: [
                 const Icon(Icons.check_circle_outline, color: Colors.white),
                 const SizedBox(width: 12),
-                Expanded(child: Text(Translations.get('A new OTP has been sent to your email.', languageNotifier.value), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                Expanded(
+                  child: Text(
+                    Translations.get(
+                      'A new OTP has been sent to your email.',
+                      languageNotifier.value,
+                    ),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
             margin: const EdgeInsets.all(20),
             elevation: 10,
           ),
@@ -183,7 +200,9 @@ class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
                   children: [
                     const SizedBox(height: 20),
                     Align(
-                      alignment: isUrdu ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment: isUrdu
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
                       child: Container(
                         height: 45,
                         width: 45,
@@ -192,7 +211,10 @@ class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
                           borderRadius: BorderRadius.circular(15),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.black87,
+                          ),
                           onPressed: () async {
                             await _firebaseService.deleteCurrentAccount();
                             if (mounted) Navigator.pop(context);
@@ -204,56 +226,85 @@ class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2168F8).withOpacity(0.1),
+                        color: const Color(0xFF2168F8).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.mark_email_read_outlined, size: 50, color: Color(0xFF2168F8)),
+                      child: const Icon(
+                        Icons.mark_email_read_outlined,
+                        size: 50,
+                        color: Color(0xFF2168F8),
+                      ),
                     ),
                     const SizedBox(height: 30),
                     Text(
                       Translations.get('Verify Email', isUrdu),
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: const TextStyle(color: Colors.grey, fontSize: 14),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
                         children: [
-                          TextSpan(text: Translations.get('Please enter the 6-digit code sent to ', isUrdu)),
+                          TextSpan(
+                            text: Translations.get(
+                              'Please enter the 6-digit code sent to ',
+                              isUrdu,
+                            ),
+                          ),
                           TextSpan(
                             text: widget.email,
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 40),
-                    
+
                     // OTP Inputs
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(6, (index) => _buildOTPBox(index)),
+                      children: List.generate(
+                        6,
+                        (index) => _buildOTPBox(index),
+                      ),
                     ),
-                    
+
                     if (_otpError != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 20),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.info_outline, color: Colors.red, size: 18),
+                            const Icon(
+                              Icons.info_outline,
+                              color: Colors.red,
+                              size: 18,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               _otpError!,
-                              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 13),
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                         ),
                       ),
 
                     const SizedBox(height: 40),
-                    
+
                     SizedBox(
                       width: double.infinity,
                       height: 55,
@@ -262,20 +313,27 @@ class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2168F8),
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                           elevation: 0,
                         ),
-                        child: _isLoading 
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Text(
-                              Translations.get('Verify OTP', isUrdu),
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
+                        child: _isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : Text(
+                                Translations.get('Verify OTP', isUrdu),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 30),
-                    
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -286,11 +344,13 @@ class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
                         GestureDetector(
                           onTap: _canResend ? _handleResend : null,
                           child: Text(
-                            _canResend 
-                              ? Translations.get('Resend', isUrdu)
-                              : '${Translations.get('Resend in', isUrdu)} $_resendTimer s',
+                            _canResend
+                                ? Translations.get('Resend', isUrdu)
+                                : '${Translations.get('Resend in', isUrdu)} $_resendTimer s',
                             style: TextStyle(
-                              color: _canResend ? const Color(0xFF2168F8) : Colors.grey,
+                              color: _canResend
+                                  ? const Color(0xFF2168F8)
+                                  : Colors.grey,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -325,11 +385,18 @@ class _OTPScreenState extends State<OTPScreen> with WidgetsBindingObserver {
             contentPadding: EdgeInsets.zero,
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _otpError != null ? Colors.red.withOpacity(0.5) : Colors.black12),
+              borderSide: BorderSide(
+                color: _otpError != null
+                    ? Colors.red.withValues(alpha: 0.5)
+                    : Colors.black12,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _otpError != null ? Colors.red : const Color(0xFF2168F8), width: 2),
+              borderSide: BorderSide(
+                color: _otpError != null ? Colors.red : const Color(0xFF2168F8),
+                width: 2,
+              ),
             ),
           ),
           onChanged: (value) {

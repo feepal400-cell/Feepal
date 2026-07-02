@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart' hide FirebaseService;
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // 1. Added dotenv import
 import 'firebase_options.dart';
 import 'welcome_screen.dart';
@@ -105,7 +105,7 @@ class FeePalApp extends StatelessWidget {
         ),
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: Colors.white,
-          indicatorColor: const Color(0xFF2168F8).withOpacity(0.1),
+          indicatorColor: const Color(0xFF2168F8).withValues(alpha: 0.1),
         ),
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.white,
@@ -233,15 +233,22 @@ class _AuthWrapperState extends State<AuthWrapper> {
         if (adminData != null) {
           String role = adminData['role'] ?? 'admin';
           String? subStatus = adminData['subscriptionStatus'];
-          String? accountStatus = adminData['accountStatus'] ?? adminData['status'];
+          String? accountStatus =
+              adminData['accountStatus'] ?? adminData['status'];
 
           // --- HIGH PRIORITY SUSPENSION CHECK ---
-          bool isDisabled = (accountStatus == 'suspended' || accountStatus == 'disabled');
-          bool isExpired = role != 'super_admin' && _firebaseService.isSubscriptionExpired(adminData);
-          
+          bool isDisabled =
+              (accountStatus == 'suspended' || accountStatus == 'disabled');
+          bool isExpired =
+              role != 'super_admin' &&
+              _firebaseService.isSubscriptionExpired(adminData);
+
           if (isDisabled || isExpired) {
             setState(() {
-              _initialScreen = SubscriptionScreen(adminData: adminData, isLockedMode: true);
+              _initialScreen = SubscriptionScreen(
+                adminData: adminData,
+                isLockedMode: true,
+              );
               _isInitializing = false;
             });
             return;
@@ -444,10 +451,10 @@ class NotificationService {
       final parentId = message?.data['parentId'] ?? '';
       final adminId = message?.data['adminId'] ?? '';
       final parentName = message?.data['parentName'] ?? 'Parent';
-      
+
       final User? user = FirebaseAuth.instance.currentUser;
       final bool isAdmin = user != null && !user.isAnonymous;
-      
+
       if (isAdmin && parentId.isNotEmpty) {
         destination = ParentAdminChatScreen(
           parentId: parentId,
@@ -463,7 +470,9 @@ class NotificationService {
           role: 'parent',
         );
       } else {
-        destination = isAdmin ? const AlertsScreen() : const ParentAlertsScreen(); // Fallback
+        destination = isAdmin
+            ? const AlertsScreen()
+            : const ParentAlertsScreen(); // Fallback
       }
     } else if (type == 'resubscription_request') {
       destination = const SuperAdminDashboard();

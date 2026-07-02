@@ -21,12 +21,13 @@ class ParentAdminChatScreen extends StatefulWidget {
   State<ParentAdminChatScreen> createState() => _ParentAdminChatScreenState();
 }
 
-class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with TickerProviderStateMixin {
+class _ParentAdminChatScreenState extends State<ParentAdminChatScreen>
+    with TickerProviderStateMixin {
   final FirebaseService _firebaseService = FirebaseService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
-  
+
   bool _showScrollToBottom = false;
   bool _isFocused = false;
 
@@ -36,7 +37,7 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
   @override
   void initState() {
     super.initState();
-    
+
     _inputGlowController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -56,9 +57,13 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
     });
 
     _scrollController.addListener(_scrollListener);
-    
+
     // Mark chat as read
-    _firebaseService.markParentAdminChatAsRead(widget.parentId, widget.adminId, widget.role);
+    _firebaseService.markParentAdminChatAsRead(
+      widget.parentId,
+      widget.adminId,
+      widget.role,
+    );
   }
 
   void _scrollListener() {
@@ -119,13 +124,13 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
 
   String? _getDateSeparator(List<QueryDocumentSnapshot> messages, int index) {
     if (index >= messages.length) return null;
-    
+
     var currentMsg = messages[index].data() as Map<String, dynamic>;
     var currentTs = currentMsg['timestamp'] as Timestamp?;
     if (currentTs == null) return null;
 
     DateTime currentDate = currentTs.toDate();
-    
+
     // Last message (oldest in reversed list) always shows date
     if (index == messages.length - 1) {
       return _formatDateSeparator(currentDate);
@@ -137,9 +142,9 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
     if (nextTs == null) return _formatDateSeparator(currentDate);
 
     DateTime nextDate = nextTs.toDate();
-    
-    if (currentDate.day != nextDate.day || 
-        currentDate.month != nextDate.month || 
+
+    if (currentDate.day != nextDate.day ||
+        currentDate.month != nextDate.month ||
         currentDate.year != nextDate.year) {
       return _formatDateSeparator(currentDate);
     }
@@ -160,8 +165,12 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
   @override
   Widget build(BuildContext context) {
     // Theme colors based on role
-    Color primaryColor = widget.role == 'admin' ? const Color(0xFF9E38FF) : const Color(0xFF00D4FF);
-    Color primaryColorDark = widget.role == 'admin' ? const Color(0xFF7B1FA2) : const Color(0xFF009BCB);
+    Color primaryColor = widget.role == 'admin'
+        ? const Color(0xFF9E38FF)
+        : const Color(0xFF00D4FF);
+    Color primaryColorDark = widget.role == 'admin'
+        ? const Color(0xFF7B1FA2)
+        : const Color(0xFF009BCB);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FA),
@@ -175,7 +184,10 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
               children: [
                 // Messages list
                 StreamBuilder<QuerySnapshot>(
-                  stream: _firebaseService.getParentAdminMessagesStream(widget.parentId, widget.adminId),
+                  stream: _firebaseService.getParentAdminMessagesStream(
+                    widget.parentId,
+                    widget.adminId,
+                  ),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Center(
@@ -198,15 +210,26 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
                       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                       itemCount: messages.length,
                       itemBuilder: (context, index) {
-                        var msg = messages[index].data() as Map<String, dynamic>;
+                        var msg =
+                            messages[index].data() as Map<String, dynamic>;
                         String msgSenderRole = msg['senderRole'] ?? '';
                         bool isMe = _isMyMessage(msgSenderRole);
-                        String? dateSeparator = _getDateSeparator(messages, index);
+                        String? dateSeparator = _getDateSeparator(
+                          messages,
+                          index,
+                        );
 
                         return Column(
                           children: [
-                            if (dateSeparator != null) _buildDateSeparator(dateSeparator),
-                            _buildAnimatedBubble(msg, isMe, index, primaryColor, primaryColorDark),
+                            if (dateSeparator != null)
+                              _buildDateSeparator(dateSeparator),
+                            _buildAnimatedBubble(
+                              msg,
+                              isMe,
+                              index,
+                              primaryColor,
+                              primaryColorDark,
+                            ),
                           ],
                         );
                       },
@@ -233,10 +256,19 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
   // ===== APP BAR =====
   Widget _buildAppBar(Color primaryColor, Color primaryColorDark) {
     return Container(
-      padding: EdgeInsets.fromLTRB(8, MediaQuery.of(context).padding.top + 8, 16, 16),
+      padding: EdgeInsets.fromLTRB(
+        8,
+        MediaQuery.of(context).padding.top + 8,
+        16,
+        16,
+      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [primaryColorDark, primaryColor, primaryColor.withOpacity(0.8)],
+          colors: [
+            primaryColorDark,
+            primaryColor,
+            primaryColor.withValues(alpha: 0.8),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -246,7 +278,7 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
         ),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withOpacity(0.4),
+            color: primaryColor.withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -256,7 +288,11 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 22),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
           const SizedBox(width: 4),
           // Avatar
@@ -266,15 +302,23 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [Colors.white.withOpacity(0.3), Colors.white.withOpacity(0.1)],
+                colors: [
+                  Colors.white.withValues(alpha: 0.3),
+                  Colors.white.withValues(alpha: 0.1),
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
             ),
             child: Center(
               child: Icon(
-                widget.role == 'parent' ? Icons.school_rounded : Icons.person_rounded,
+                widget.role == 'parent'
+                    ? Icons.school_rounded
+                    : Icons.person_rounded,
                 color: Colors.white,
                 size: 24,
               ),
@@ -287,7 +331,9 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.role == 'parent' ? 'School Administration' : widget.parentName,
+                  widget.role == 'parent'
+                      ? 'School Administration'
+                      : widget.parentName,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -307,7 +353,9 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF4ADE80).withOpacity(0.5),
+                            color: const Color(
+                              0xFF4ADE80,
+                            ).withValues(alpha: 0.5),
                             blurRadius: 4,
                           ),
                         ],
@@ -315,9 +363,11 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      widget.role == 'parent' ? 'Contact School' : 'Parent Contact',
+                      widget.role == 'parent'
+                          ? 'Contact School'
+                          : 'Parent Contact',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
                       ),
@@ -329,14 +379,19 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
           ),
           if (widget.role == 'admin')
             IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+              icon: const Icon(
+                Icons.delete_outline_rounded,
+                color: Colors.white,
+              ),
               tooltip: 'Delete Chat',
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
                     title: const Text('Delete Chat'),
-                    content: const Text('Are you sure you want to completely delete this chat? This action cannot be undone.'),
+                    content: const Text(
+                      'Are you sure you want to completely delete this chat? This action cannot be undone.',
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
@@ -345,10 +400,16 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
                       TextButton(
                         onPressed: () async {
                           Navigator.pop(ctx);
-                          await _firebaseService.deleteParentChat(widget.parentId, widget.adminId);
+                          await _firebaseService.deleteParentChat(
+                            widget.parentId,
+                            widget.adminId,
+                          );
                           if (mounted) Navigator.pop(context);
                         },
-                        child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ),
                     ],
                   ),
@@ -373,8 +434,8 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [
-                  primaryColor.withOpacity(0.1),
-                  primaryColor.withOpacity(0.05),
+                  primaryColor.withValues(alpha: 0.1),
+                  primaryColor.withValues(alpha: 0.05),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -398,10 +459,7 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
           const SizedBox(height: 8),
           Text(
             'Start the conversation!',
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 13,
-            ),
+            style: TextStyle(color: Colors.grey[400], fontSize: 13),
           ),
         ],
       ),
@@ -424,7 +482,7 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -448,7 +506,13 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
   }
 
   // ===== ANIMATED BUBBLE WRAPPER =====
-  Widget _buildAnimatedBubble(Map<String, dynamic> msg, bool isMe, int index, Color primaryColor, Color primaryColorDark) {
+  Widget _buildAnimatedBubble(
+    Map<String, dynamic> msg,
+    bool isMe,
+    int index,
+    Color primaryColor,
+    Color primaryColorDark,
+  ) {
     return TweenAnimationBuilder<double>(
       duration: Duration(milliseconds: 350 + (index.clamp(0, 5) * 30)),
       tween: Tween<double>(begin: 0, end: 1),
@@ -467,7 +531,12 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
   }
 
   // ===== MESSAGE BUBBLE =====
-  Widget _buildMessageBubble(Map<String, dynamic> msg, bool isMe, Color primaryColor, Color primaryColorDark) {
+  Widget _buildMessageBubble(
+    Map<String, dynamic> msg,
+    bool isMe,
+    Color primaryColor,
+    Color primaryColorDark,
+  ) {
     String text = msg['text'] ?? '';
     dynamic timestamp = msg['timestamp'];
 
@@ -504,15 +573,17 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
             boxShadow: [
               BoxShadow(
                 color: isMe
-                    ? primaryColor.withOpacity(0.25)
-                    : Colors.black.withOpacity(0.04),
+                    ? primaryColor.withValues(alpha: 0.25)
+                    : Colors.black.withValues(alpha: 0.04),
                 blurRadius: isMe ? 12 : 8,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Column(
-            crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: isMe
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
             children: [
               Text(
                 text,
@@ -530,7 +601,9 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
                   Text(
                     time,
                     style: TextStyle(
-                      color: isMe ? Colors.white.withOpacity(0.65) : Colors.grey[400],
+                      color: isMe
+                          ? Colors.white.withValues(alpha: 0.65)
+                          : Colors.grey[400],
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),
@@ -540,7 +613,7 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
                     Icon(
                       Icons.done_all_rounded,
                       size: 14,
-                      color: Colors.white.withOpacity(0.65),
+                      color: Colors.white.withValues(alpha: 0.65),
                     ),
                   ],
                 ],
@@ -564,7 +637,7 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: primaryColor.withOpacity(0.2),
+              color: primaryColor.withValues(alpha: 0.2),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -591,7 +664,7 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, -8),
           ),
@@ -608,7 +681,9 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
                 boxShadow: _isFocused
                     ? [
                         BoxShadow(
-                          color: primaryColor.withOpacity(0.08 * _inputGlowAnimation.value),
+                          color: primaryColor.withValues(
+                            alpha: 0.08 * _inputGlowAnimation.value,
+                          ),
                           blurRadius: 20,
                           spreadRadius: 2,
                         ),
@@ -624,7 +699,7 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
                           color: _isFocused
-                              ? primaryColor.withOpacity(0.3)
+                              ? primaryColor.withValues(alpha: 0.3)
                               : Colors.transparent,
                           width: 1.5,
                         ),
@@ -642,7 +717,10 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
                             fontSize: 15,
                           ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
                         ),
                         style: const TextStyle(
                           color: Color(0xFF1E293B),
@@ -657,14 +735,17 @@ class _ParentAdminChatScreenState extends State<ParentAdminChatScreen> with Tick
                     height: 48,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [primaryColor, primaryColor.withOpacity(0.8)],
+                        colors: [
+                          primaryColor,
+                          primaryColor.withValues(alpha: 0.8),
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: primaryColor.withOpacity(0.3),
+                          color: primaryColor.withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),

@@ -35,13 +35,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     super.initState();
     _currentRoomId = widget.roomId ?? _firebaseService.currentAdminId ?? '';
     _isSuperAdmin = widget.roomId != null;
-    
+
     print("💬 [CHAT DEBUG] ChatScreen Initialized");
-    print("💬 [CHAT DEBUG] Room ID Source: ${widget.roomId != null ? 'Widget Parameter' : 'Current Admin Auth'}");
+    print(
+      "💬 [CHAT DEBUG] Room ID Source: ${widget.roomId != null ? 'Widget Parameter' : 'Current Admin Auth'}",
+    );
     print("💬 [CHAT DEBUG] Final Room ID: '$_currentRoomId'");
     print("💬 [CHAT DEBUG] Is Super Admin View: $_isSuperAdmin");
-    
-    debugPrint("💬 [Chat] Initialized room: $_currentRoomId (as Super Admin: $_isSuperAdmin)");
+
+    debugPrint(
+      "💬 [Chat] Initialized room: $_currentRoomId (as Super Admin: $_isSuperAdmin)",
+    );
 
     // Input glow animation
     _inputGlowController = AnimationController(
@@ -95,7 +99,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       }
       _checkAndSendAutoMessage();
     }
-    
+
     // Mark as read based on who is viewing
     _firebaseService.markChatAsRead(_currentRoomId, _isSuperAdmin);
   }
@@ -109,11 +113,18 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
     try {
       print("💬 [CHAT DEBUG] Checking for existing messages...");
-      final messages = await _firebaseService.getMessagesStream(_currentRoomId).first;
+      final messages = await _firebaseService
+          .getMessagesStream(_currentRoomId)
+          .first;
       if (messages.docs.isEmpty && !_isAutoMessageSent) {
         _isAutoMessageSent = true;
-        print("💬 [CHAT DEBUG] Sending automated welcome message to $_adminName...");
-        await _firebaseService.sendAutoWelcomeMessage(_currentRoomId, _adminName);
+        print(
+          "💬 [CHAT DEBUG] Sending automated welcome message to $_adminName...",
+        );
+        await _firebaseService.sendAutoWelcomeMessage(
+          _currentRoomId,
+          _adminName,
+        );
       }
     } catch (e) {
       print("💬 [CHAT DEBUG] Error in auto-message check: $e");
@@ -131,7 +142,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     final text = _messageController.text.trim();
     print("📱 [UI DEBUG] Sending text: '$text'");
     print("📱 [UI DEBUG] To Room: '$_currentRoomId'");
-    
+
     _messageController.clear();
 
     try {
@@ -165,30 +176,32 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   bool _isMyMessage(Map<String, dynamic> msg) {
     String senderRole = msg['senderRole'] ?? '';
     String senderId = msg['senderId'] ?? '';
-    
+
     // System messages always on the left
     if (senderRole == 'system') return false;
-    
+
     // Fallback for legacy messages or extra safety
     if (_isSuperAdmin) {
       // Super Admin view: super_admin messages OR messages NOT matching roomId are "mine"
-      return senderRole == 'super_admin' || (senderId.isNotEmpty && senderId != _currentRoomId);
+      return senderRole == 'super_admin' ||
+          (senderId.isNotEmpty && senderId != _currentRoomId);
     } else {
       // Admin view: admin messages OR messages matching roomId (currentAdminId) are "mine"
-      return senderRole == 'admin' || (senderId.isNotEmpty && senderId == _currentRoomId);
+      return senderRole == 'admin' ||
+          (senderId.isNotEmpty && senderId == _currentRoomId);
     }
   }
 
   /// Check if we need a date separator between messages
   String? _getDateSeparator(List<QueryDocumentSnapshot> messages, int index) {
     if (index >= messages.length) return null;
-    
+
     var currentMsg = messages[index].data() as Map<String, dynamic>;
     var currentTs = currentMsg['timestamp'] as Timestamp?;
     if (currentTs == null) return null;
 
     DateTime currentDate = currentTs.toDate();
-    
+
     // Last message (oldest in reversed list) always shows date
     if (index == messages.length - 1) {
       return _formatDateSeparator(currentDate);
@@ -200,9 +213,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     if (nextTs == null) return _formatDateSeparator(currentDate);
 
     DateTime nextDate = nextTs.toDate();
-    
-    if (currentDate.day != nextDate.day || 
-        currentDate.month != nextDate.month || 
+
+    if (currentDate.day != nextDate.day ||
+        currentDate.month != nextDate.month ||
         currentDate.year != nextDate.year) {
       return _formatDateSeparator(currentDate);
     }
@@ -234,9 +247,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               children: [
                 // Background pattern
                 Positioned.fill(
-                  child: CustomPaint(
-                    painter: _ChatPatternPainter(),
-                  ),
+                  child: CustomPaint(painter: _ChatPatternPainter()),
                 ),
                 // Messages list
                 StreamBuilder<QuerySnapshot>(
@@ -263,10 +274,14 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                       itemCount: messages.length,
                       itemBuilder: (context, index) {
-                        var msg = messages[index].data() as Map<String, dynamic>;
+                        var msg =
+                            messages[index].data() as Map<String, dynamic>;
                         bool isMe = _isMyMessage(msg);
                         bool isSystem = (msg['senderRole'] ?? '') == 'system';
-                        String? dateSeparator = _getDateSeparator(messages, index);
+                        String? dateSeparator = _getDateSeparator(
+                          messages,
+                          index,
+                        );
 
                         return Column(
                           children: [
@@ -304,7 +319,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   // ===== APP BAR =====
   Widget _buildAppBar() {
     return Container(
-      padding: EdgeInsets.fromLTRB(8, MediaQuery.of(context).padding.top + 8, 16, 16),
+      padding: EdgeInsets.fromLTRB(
+        8,
+        MediaQuery.of(context).padding.top + 8,
+        16,
+        16,
+      ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF1A5CE8), Color(0xFF2979FF), Color(0xFF40C4FF)],
@@ -328,7 +348,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           // Back button
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 22),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
           const SizedBox(width: 4),
           // Avatar
@@ -338,15 +362,23 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [Colors.white.withOpacity(0.3), Colors.white.withOpacity(0.1)],
+                colors: [
+                  Colors.white.withValues(alpha: 0.3),
+                  Colors.white.withValues(alpha: 0.1),
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
             ),
             child: Center(
               child: Icon(
-                _isSuperAdmin ? Icons.school_rounded : Icons.support_agent_rounded,
+                _isSuperAdmin
+                    ? Icons.school_rounded
+                    : Icons.support_agent_rounded,
                 color: Colors.white,
                 size: 24,
               ),
@@ -359,7 +391,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _isSuperAdmin ? (widget.schoolName ?? 'Chat') : 'FeePal Support',
+                  _isSuperAdmin
+                      ? (widget.schoolName ?? 'Chat')
+                      : 'FeePal Support',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -379,7 +413,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF4ADE80).withOpacity(0.5),
+                            color: const Color(
+                              0xFF4ADE80,
+                            ).withValues(alpha: 0.5),
                             blurRadius: 4,
                           ),
                         ],
@@ -387,9 +423,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      _isSuperAdmin ? 'Admin Support Chat' : 'We typically reply within minutes',
+                      _isSuperAdmin
+                          ? 'Admin Support Chat'
+                          : 'We typically reply within minutes',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
                       ),
@@ -401,14 +439,19 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           ),
           if (_isSuperAdmin)
             IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+              icon: const Icon(
+                Icons.delete_outline_rounded,
+                color: Colors.white,
+              ),
               tooltip: 'Delete Chat',
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
                     title: const Text('Delete Chat'),
-                    content: const Text('Are you sure you want to completely delete this chat? This action cannot be undone.'),
+                    content: const Text(
+                      'Are you sure you want to completely delete this chat? This action cannot be undone.',
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
@@ -417,10 +460,15 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       TextButton(
                         onPressed: () async {
                           Navigator.pop(ctx);
-                          await _firebaseService.deleteSuperAdminChat(_currentRoomId);
+                          await _firebaseService.deleteSuperAdminChat(
+                            _currentRoomId,
+                          );
                           if (mounted) Navigator.pop(context);
                         },
-                        child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ),
                     ],
                   ),
@@ -445,8 +493,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF2168F8).withOpacity(0.1),
-                  const Color(0xFF40C4FF).withOpacity(0.05),
+                  const Color(0xFF2168F8).withValues(alpha: 0.1),
+                  const Color(0xFF40C4FF).withValues(alpha: 0.05),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -470,10 +518,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           const SizedBox(height: 8),
           Text(
             'Start the conversation!',
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 13,
-            ),
+            style: TextStyle(color: Colors.grey[400], fontSize: 13),
           ),
         ],
       ),
@@ -496,7 +541,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -538,15 +583,15 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF2168F8).withOpacity(0.06),
-                  const Color(0xFF40C4FF).withOpacity(0.04),
+                  const Color(0xFF2168F8).withValues(alpha: 0.06),
+                  const Color(0xFF40C4FF).withValues(alpha: 0.04),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFF2168F8).withOpacity(0.12),
+                color: const Color(0xFF2168F8).withValues(alpha: 0.12),
                 width: 1,
               ),
             ),
@@ -558,10 +603,14 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2168F8).withOpacity(0.1),
+                        color: const Color(0xFF2168F8).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.support_agent_rounded, color: Color(0xFF2168F8), size: 16),
+                      child: const Icon(
+                        Icons.support_agent_rounded,
+                        color: Color(0xFF2168F8),
+                        size: 16,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     const Text(
@@ -658,7 +707,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           maxWidth: MediaQuery.of(context).size.width * 0.78,
         ),
         child: Column(
-          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             // Sender label
             if (senderLabel != null)
@@ -694,15 +745,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 boxShadow: [
                   BoxShadow(
                     color: isMe
-                        ? const Color(0xFF2168F8).withOpacity(0.25)
-                        : Colors.black.withOpacity(0.04),
+                        ? const Color(0xFF2168F8).withValues(alpha: 0.25)
+                        : Colors.black.withValues(alpha: 0.04),
                     blurRadius: isMe ? 12 : 8,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Column(
-                crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                crossAxisAlignment: isMe
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
                 children: [
                   Text(
                     text,
@@ -720,7 +773,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       Text(
                         time,
                         style: TextStyle(
-                          color: isMe ? Colors.white.withOpacity(0.65) : Colors.grey[400],
+                          color: isMe
+                              ? Colors.white.withValues(alpha: 0.65)
+                              : Colors.grey[400],
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
                         ),
@@ -730,7 +785,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                         Icon(
                           Icons.done_all_rounded,
                           size: 14,
-                          color: Colors.white.withOpacity(0.65),
+                          color: Colors.white.withValues(alpha: 0.65),
                         ),
                       ],
                     ],
@@ -756,7 +811,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF2168F8).withOpacity(0.2),
+              color: const Color(0xFF2168F8).withValues(alpha: 0.2),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -783,7 +838,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, -8),
           ),
@@ -800,7 +855,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 boxShadow: _isFocused
                     ? [
                         BoxShadow(
-                          color: const Color(0xFF2168F8).withOpacity(0.08 * _inputGlowAnimation.value),
+                          color: const Color(
+                            0xFF2168F8,
+                          ).withValues(alpha: 0.08 * _inputGlowAnimation.value),
                           blurRadius: 20,
                           spreadRadius: 2,
                         ),
@@ -816,7 +873,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
                           color: _isFocused
-                              ? const Color(0xFF2168F8).withOpacity(0.3)
+                              ? const Color(0xFF2168F8).withValues(alpha: 0.3)
                               : Colors.transparent,
                           width: 1.5,
                         ),
@@ -832,13 +889,18 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                           color: Color(0xFF1E293B),
                         ),
                         decoration: InputDecoration(
-                          hintText: _isSuperAdmin ? 'Reply to admin...' : 'Type your message...',
+                          hintText: _isSuperAdmin
+                              ? 'Reply to admin...'
+                              : 'Type your message...',
                           hintStyle: TextStyle(
                             color: Colors.grey[400],
                             fontSize: 14.5,
                           ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
                         ),
                         onSubmitted: (_) => _sendMessage(),
                       ),
@@ -863,13 +925,19 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF2168F8).withOpacity(0.35),
+                              color: const Color(
+                                0xFF2168F8,
+                              ).withValues(alpha: 0.35),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
                           ],
                         ),
-                        child: const Icon(Icons.send_rounded, color: Colors.white, size: 22),
+                        child: const Icon(
+                          Icons.send_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
                     ),
                   ),
@@ -888,7 +956,7 @@ class _ChatPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF2168F8).withOpacity(0.018)
+      ..color = const Color(0xFF2168F8).withValues(alpha: 0.018)
       ..style = PaintingStyle.fill;
 
     // Draw subtle circles pattern

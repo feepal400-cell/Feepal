@@ -13,18 +13,20 @@ class ParentForgotPasswordScreen extends StatefulWidget {
   const ParentForgotPasswordScreen({super.key, this.initialEmail});
 
   @override
-  State<ParentForgotPasswordScreen> createState() => _ParentForgotPasswordScreenState();
+  State<ParentForgotPasswordScreen> createState() =>
+      _ParentForgotPasswordScreenState();
 }
 
-class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen> with WidgetsBindingObserver {
+class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
+    with WidgetsBindingObserver {
   final FirebaseService _firebaseService = FirebaseService();
   final EmailService _emailService = EmailService();
-  
+
   String? _otpError;
-  
+
   // Step 0: Email
   final TextEditingController _emailController = TextEditingController();
-  
+
   // Step 1: OTP
   final TextEditingController _otpController = TextEditingController();
   String? _generatedOTP;
@@ -55,7 +57,8 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _currentStep == ParentForgotPasswordStep.otp) {
+    if (state == AppLifecycleState.resumed &&
+        _currentStep == ParentForgotPasswordStep.otp) {
       _checkClipboardForOTP();
     }
   }
@@ -86,7 +89,9 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
     try {
       final userData = await _firebaseService.checkUserType(email);
       if (userData == null || userData['role'] != 'parent') {
-        _showSnack(Translations.get('No parent account found with this email.', isUrdu));
+        _showSnack(
+          Translations.get('No parent account found with this email.', isUrdu),
+        );
         return;
       }
 
@@ -95,16 +100,21 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
       _userTypeData = userData;
 
       final success = await _emailService.sendVerificationOTP(
-        userEmail: email, 
-        otpCode: otp, 
+        userEmail: email,
+        otpCode: otp,
         reason: 'password reset',
       );
 
       if (success) {
         setState(() => _currentStep = ParentForgotPasswordStep.otp);
-        _showSnack('${Translations.get('OTP sent to', isUrdu)} $email', isError: false);
+        _showSnack(
+          '${Translations.get('OTP sent to', isUrdu)} $email',
+          isError: false,
+        );
       } else {
-        _showSnack(Translations.get('Failed to send OTP. Please try again.', isUrdu));
+        _showSnack(
+          Translations.get('Failed to send OTP. Please try again.', isUrdu),
+        );
       }
     } catch (e) {
       _showSnack(e.toString());
@@ -118,7 +128,12 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
     if (_otpController.text.trim() == _generatedOTP) {
       _showResetPasswordBottomSheet();
     } else {
-      setState(() => _otpError = Translations.get('Invalid OTP code. Please check again.', languageNotifier.value));
+      setState(
+        () => _otpError = Translations.get(
+          'Invalid OTP code. Please check again.',
+          languageNotifier.value,
+        ),
+      );
     }
   }
 
@@ -128,9 +143,20 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
       SnackBar(
         content: Row(
           children: [
-            Icon(isError ? Icons.error_outline : Icons.check_circle_outline, color: Colors.white),
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+            ),
             const SizedBox(width: 12),
-            Expanded(child: Text(msg, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+            Expanded(
+              child: Text(
+                msg,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
         backgroundColor: isError ? Colors.redAccent : Colors.green,
@@ -153,9 +179,18 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Password Updated!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Text(
+              'Password Updated!',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
             const SizedBox(height: 10),
-            Text(Translations.get('Your password has been reset successfully. You can now login with your new password.', isUrdu), textAlign: TextAlign.center),
+            Text(
+              Translations.get(
+                'Your password has been reset successfully. You can now login with your new password.',
+                isUrdu,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
         actions: [
@@ -165,7 +200,13 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
                 // Return to login screen
                 Navigator.of(context).popUntil((route) => route.isFirst);
               },
-              child: Text(Translations.get('OK', isUrdu), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              child: Text(
+                Translations.get('OK', isUrdu),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ),
         ],
@@ -176,7 +217,8 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
   void _showResetPasswordBottomSheet() {
     final isUrdu = languageNotifier.value;
     final TextEditingController newPasswordController = TextEditingController();
-    final TextEditingController confirmPasswordController = TextEditingController();
+    final TextEditingController confirmPasswordController =
+        TextEditingController();
     bool obscurePasswords = true;
     bool isSaving = false;
 
@@ -193,7 +235,10 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
           builder: (context, setSheetState) {
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 20,
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom +
+                    MediaQuery.of(context).padding.bottom +
+                    20,
                 left: 24,
                 right: 24,
                 top: 30,
@@ -204,11 +249,18 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
                 children: [
                   Text(
                     Translations.get('New Password', isUrdu),
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF2168F8)),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2168F8),
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    Translations.get('Please set a strong password for your account.', isUrdu),
+                    Translations.get(
+                      'Please set a strong password for your account.',
+                      isUrdu,
+                    ),
                     style: const TextStyle(fontSize: 14, color: Colors.black54),
                   ),
                   const SizedBox(height: 30),
@@ -219,8 +271,14 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
                     icon: Icons.lock_outline,
                     obscureText: obscurePasswords,
                     suffixIcon: IconButton(
-                      icon: Icon(obscurePasswords ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setSheetState(() => obscurePasswords = !obscurePasswords),
+                      icon: Icon(
+                        obscurePasswords
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () => setSheetState(
+                        () => obscurePasswords = !obscurePasswords,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -231,8 +289,14 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
                     icon: Icons.lock_reset_outlined,
                     obscureText: obscurePasswords,
                     suffixIcon: IconButton(
-                      icon: Icon(obscurePasswords ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setSheetState(() => obscurePasswords = !obscurePasswords),
+                      icon: Icon(
+                        obscurePasswords
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () => setSheetState(
+                        () => obscurePasswords = !obscurePasswords,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -240,59 +304,90 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
                     width: double.infinity,
                     height: 55,
                     child: ThrottledButton.elevated(
-                      onPressed: isSaving ? () {} : () async {
-                        final newPass = newPasswordController.text;
-                        final confirmPass = confirmPasswordController.text;
+                      onPressed: isSaving
+                          ? () {}
+                          : () async {
+                              final newPass = newPasswordController.text;
+                              final confirmPass =
+                                  confirmPasswordController.text;
 
-                        if (newPass.length < 6) {
-                          _showSnack(Translations.get('Password must be at least 6 characters.', isUrdu));
-                          return;
-                        }
-                        if (newPass != confirmPass) {
-                          _showSnack(Translations.get('Passwords do not match.', isUrdu));
-                          return;
-                        }
+                              if (newPass.length < 6) {
+                                _showSnack(
+                                  Translations.get(
+                                    'Password must be at least 6 characters.',
+                                    isUrdu,
+                                  ),
+                                );
+                                return;
+                              }
+                              if (newPass != confirmPass) {
+                                _showSnack(
+                                  Translations.get(
+                                    'Passwords do not match.',
+                                    isUrdu,
+                                  ),
+                                );
+                                return;
+                              }
 
-                        setSheetState(() => isSaving = true);
+                              setSheetState(() => isSaving = true);
 
-                        try {
-                          final success = await _firebaseService.resetPasswordManual(
-                            _emailController.text.trim(),
-                            newPass,
-                            'parent',
-                          );
+                              try {
+                                final success = await _firebaseService
+                                    .resetPasswordManual(
+                                      _emailController.text.trim(),
+                                      newPass,
+                                      'parent',
+                                    );
 
-                          if (context.mounted) {
-                            if (success) {
-                              Navigator.pop(context); // Close bottom sheet
-                              _showSuccessDialog();
-                            } else {
-                              _showSnack(Translations.get('Failed to update password. Please try again.', isUrdu));
-                            }
-                          }
-                        } catch (e) {
-                          _showSnack(e.toString());
-                        } finally {
-                          if (mounted) setSheetState(() => isSaving = false);
-                        }
-                      },
+                                if (context.mounted) {
+                                  if (success) {
+                                    Navigator.pop(
+                                      context,
+                                    ); // Close bottom sheet
+                                    _showSuccessDialog();
+                                  } else {
+                                    _showSnack(
+                                      Translations.get(
+                                        'Failed to update password. Please try again.',
+                                        isUrdu,
+                                      ),
+                                    );
+                                  }
+                                }
+                              } catch (e) {
+                                _showSnack(e.toString());
+                              } finally {
+                                if (mounted) {
+                                  setSheetState(() => isSaving = false);
+                                }
+                              }
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2972FF),
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
                       ),
                       child: isSaving
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(Translations.get('Update Password', isUrdu), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                              Translations.get('Update Password', isUrdu),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 30),
                 ],
               ),
             );
-          }
+          },
         );
-      }
+      },
     );
   }
 
@@ -307,7 +402,14 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -317,10 +419,22 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
             hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
             prefixIcon: Icon(icon, color: Colors.black54),
             suffixIcon: suffixIcon,
-            contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 15),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Colors.black26)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Colors.black26)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF2168F8))),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 0,
+              horizontal: 15,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Colors.black26),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Colors.black26),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Color(0xFF2168F8)),
+            ),
           ),
         ),
       ],
@@ -380,9 +494,10 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
       child: Row(
         children: [
           Container(
-            height: 45, width: 45,
+            height: 45,
+            width: 45,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(15),
             ),
             child: IconButton(
@@ -393,7 +508,11 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
           const SizedBox(width: 15),
           Text(
             Translations.get('Forgot Password', isUrdu),
-            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -415,8 +534,15 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
       children: [
         const SizedBox(height: 20),
         Text(
-          Translations.get('Enter your registered email to receive a verification OTP code.', isUrdu),
-          style: const TextStyle(fontSize: 15, color: Colors.black54, height: 1.5),
+          Translations.get(
+            'Enter your registered email to receive a verification OTP code.',
+            isUrdu,
+          ),
+          style: const TextStyle(
+            fontSize: 15,
+            color: Colors.black54,
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: 40),
         _buildTextField(
@@ -442,7 +568,11 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
         const SizedBox(height: 20),
         Text(
           Translations.get('Verify OTP', isUrdu),
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF2168F8)),
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2168F8),
+          ),
         ),
         const SizedBox(height: 10),
         Text(
@@ -470,7 +600,11 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
             padding: const EdgeInsets.only(top: 8, left: 4),
             child: Text(
               _otpError!,
-              style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         const SizedBox(height: 40),
@@ -480,8 +614,12 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
         ),
         Center(
           child: TextButton(
-            onPressed: () => setState(() => _currentStep = ParentForgotPasswordStep.email),
-            child: Text(Translations.get('Change Email', isUrdu), style: const TextStyle(color: Colors.grey)),
+            onPressed: () =>
+                setState(() => _currentStep = ParentForgotPasswordStep.email),
+            child: Text(
+              Translations.get('Change Email', isUrdu),
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
         ),
       ],
@@ -500,7 +638,14 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -512,17 +657,32 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
             prefixIcon: Icon(icon, color: Colors.black54),
-            contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 15),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Colors.black26)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Colors.black26)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF2168F8))),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 0,
+              horizontal: 15,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Colors.black26),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Colors.black26),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Color(0xFF2168F8)),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPrimaryButton({required String text, required VoidCallback onPressed}) {
+  Widget _buildPrimaryButton({
+    required String text,
+    required VoidCallback onPressed,
+  }) {
     return SizedBox(
       width: double.infinity,
       height: 55,
@@ -531,12 +691,20 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF2972FF),
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
           elevation: 0,
         ),
-        child: _isLoading 
-          ? const CircularProgressIndicator(color: Colors.white)
-          : Text(text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        child: _isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }

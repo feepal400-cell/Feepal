@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'dart:io';
 import 'signup_screen.dart';
 import 'language_config.dart';
@@ -31,8 +30,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _showVersion = true;
-  bool _showChangelog = false;
-  bool _canCloseChangelog = false;
 
   // Error Handling State
   String? _emailError;
@@ -50,16 +47,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() {
           _showVersion = false;
-          _showChangelog = true; // Show changelog after version fades
-        });
-        
-        // Wait another 3 seconds before allowing close
-        Future.delayed(const Duration(seconds: 3), () {
-          if (mounted) {
-            setState(() {
-              _canCloseChangelog = true;
-            });
-          }
         });
       }
     });
@@ -79,24 +66,44 @@ class _LoginScreenState extends State<LoginScreen> {
     switch (code) {
       case 'user-not-found':
       case 'auth/user-not-found':
-        return Translations.get("We couldn't find an account with that email.", isUrdu);
+        return Translations.get(
+          "We couldn't find an account with that email.",
+          isUrdu,
+        );
       case 'wrong-password':
       case 'auth/wrong-password':
       case 'invalid-credential':
       case 'auth/invalid-credential':
-        return Translations.get("Incorrect password. Please try again.", isUrdu);
+        return Translations.get(
+          "Incorrect password. Please try again.",
+          isUrdu,
+        );
       case 'invalid-email':
       case 'auth/invalid-email':
-        return Translations.get("The email address is badly formatted.", isUrdu);
+        return Translations.get(
+          "The email address is badly formatted.",
+          isUrdu,
+        );
       case 'user-disabled':
       case 'auth/user-disabled':
         return Translations.get("This account has been disabled.", isUrdu);
       case 'network-request-failed':
-        return Translations.get("Network error. Please check your internet connection.", isUrdu);
+        return Translations.get(
+          "Network error. Please check your internet connection.",
+          isUrdu,
+        );
       case 'too-many-requests':
-        return Translations.get("Too many attempts. Please try again later.", isUrdu);
+        return Translations.get(
+          "Too many attempts. Please try again later.",
+          isUrdu,
+        );
       default:
-        return code.contains('/') ? Translations.get("Authentication failed. Please try again.", isUrdu) : code;
+        return code.contains('/')
+            ? Translations.get(
+                "Authentication failed. Please try again.",
+                isUrdu,
+              )
+            : code;
     }
   }
 
@@ -115,8 +122,9 @@ class _LoginScreenState extends State<LoginScreen> {
       String digits = identifier.replaceAll(RegExp(r'[^0-9]'), '');
       if (digits.startsWith('92')) {
         digits = digits.substring(2);
-      } else if (digits.startsWith('0')) digits = digits.substring(1);
-      
+      } else if (digits.startsWith('0'))
+        digits = digits.substring(1);
+
       if (digits.length == 10) {
         identifier = '+92 ${digits.substring(0, 3)} ${digits.substring(3)}';
         _emailController.text = identifier;
@@ -128,19 +136,28 @@ class _LoginScreenState extends State<LoginScreen> {
       _emailError = Translations.get('Email or Phone is required', isUrdu);
       isValid = false;
     } else {
-      bool isEmail = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(identifier);
-      bool isPhone = RegExp(r'^\+?[0-9]{10,14}$').hasMatch(identifier.replaceAll(' ', ''));
+      bool isEmail = RegExp(
+        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+      ).hasMatch(identifier);
+      bool isPhone = RegExp(
+        r'^\+?[0-9]{10,14}$',
+      ).hasMatch(identifier.replaceAll(' ', ''));
 
       if (!isEmail && !isPhone) {
-        _emailError = Translations.get('Enter a valid email or phone number', isUrdu);
+        _emailError = Translations.get(
+          'Enter a valid email or phone number',
+          isUrdu,
+        );
         isValid = false;
       } else {
         _emailError = null;
       }
     }
 
-    bool isPhone = RegExp(r'^\+?[0-9]{10,14}$').hasMatch(identifier.replaceAll(' ', ''));
-    
+    bool isPhone = RegExp(
+      r'^\+?[0-9]{10,14}$',
+    ).hasMatch(identifier.replaceAll(' ', ''));
+
     // Password Validation (Skip for Admin Phone Login as it uses OTP)
     if (!isParentSelected && isPhone) {
       _passwordError = null;
@@ -149,7 +166,10 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordError = Translations.get('Password is required', isUrdu);
         isValid = false;
       } else if (password.length < 6) {
-        _passwordError = Translations.get('Password must be at least 6 characters', isUrdu);
+        _passwordError = Translations.get(
+          'Password must be at least 6 characters',
+          isUrdu,
+        );
         isValid = false;
       } else {
         _passwordError = null;
@@ -172,29 +192,41 @@ class _LoginScreenState extends State<LoginScreen> {
       final password = _passwordController.text;
 
       // --- LOCAL PRIORITY BYPASS: feepal@gmail.com ---
-      if (!isParentSelected && email.toLowerCase() == 'feepal@gmail.com' && password == '123456') {
+      if (!isParentSelected &&
+          email.toLowerCase() == 'feepal@gmail.com' &&
+          password == '123456') {
         debugPrint("⚡ [Login] Local Bypass Triggered for feepal@gmail.com");
-        
+
         // NEW: Ensure we sign in to Firebase Auth so Chat works!
         try {
-          await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
         } catch (e) {
-          debugPrint("⚠️ [Login] Bypass Firebase Sign-in failed (User might not exist in Auth): $e");
+          debugPrint(
+            "⚠️ [Login] Bypass Firebase Sign-in failed (User might not exist in Auth): $e",
+          );
           // We continue anyway so the user isn't blocked from the dashboard
         }
 
         final SaPrefs = await SharedPreferences.getInstance();
         await SaPrefs.setBool('isLoggedIn', true);
         await SaPrefs.setString('userRole', 'super_admin');
-        
+
         User? user = FirebaseAuth.instance.currentUser;
-        await SaPrefs.setString('adminId', user?.uid ?? 'SUPER_ADMIN_MASTER_UID'); 
-        
+        await SaPrefs.setString(
+          'adminId',
+          user?.uid ?? 'SUPER_ADMIN_MASTER_UID',
+        );
+
         if (mounted) {
           navigateWithLoader(context, () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const SuperAdminDashboard()),
+              MaterialPageRoute(
+                builder: (context) => const SuperAdminDashboard(),
+              ),
             );
           });
         }
@@ -203,13 +235,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // --- NETWORK CONNECTIVITY CHECK ---
       try {
-        final result = await InternetAddress.lookup('google.com').timeout(const Duration(seconds: 5));
+        final result = await InternetAddress.lookup(
+          'google.com',
+        ).timeout(const Duration(seconds: 5));
         if (result.isEmpty || result[0].rawAddress.isEmpty) {
           throw const SocketException('Network check failed');
         }
       } catch (_) {
         if (mounted) {
-          _showErrorBanner(Translations.get('Network Connection Error: Please check your internet.', isUrdu));
+          _showErrorBanner(
+            Translations.get(
+              'Network Connection Error: Please check your internet.',
+              isUrdu,
+            ),
+          );
           setState(() => _isLoading = false);
         }
         return;
@@ -225,10 +264,10 @@ class _LoginScreenState extends State<LoginScreen> {
           email: email,
           password: password,
         );
-        
+
         if (error == null) {
           // --- ROLE GUARD: Ensure this isn't an Admin trying to use Parent Portal ---
-          // Since parent login keeps us anonymous or session-less in Auth, 
+          // Since parent login keeps us anonymous or session-less in Auth,
           // we check if an admin doc exists for this EMAIL if we want to be strict,
           // but usually, we just ensure we found students.
           if (_firebaseService.selectedStudent == null) {
@@ -240,7 +279,6 @@ class _LoginScreenState extends State<LoginScreen> {
             return;
           }
 
-
           // Success: Save session and navigate
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isLoggedIn', true);
@@ -251,7 +289,9 @@ class _LoginScreenState extends State<LoginScreen> {
             navigateWithLoader(context, () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const ParentDashboardScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const ParentDashboardScreen(),
+                ),
               );
             });
           }
@@ -265,10 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         // Admin Login uses Email/Password Auth
-        error = await _firebaseService.login(
-          email: email,
-          password: password,
-        );
+        error = await _firebaseService.login(email: email, password: password);
 
         if (error == null) {
           User? user = FirebaseAuth.instance.currentUser;
@@ -291,18 +328,24 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
-  
+
   Future<void> _handleAdminPhoneLogin(String phone, bool isUrdu) async {
     try {
-      var qs = await FirebaseFirestore.instance.collection('admins').where('phoneNumber', isEqualTo: phone).limit(1).get();
+      var qs = await FirebaseFirestore.instance
+          .collection('admins')
+          .where('phoneNumber', isEqualTo: phone)
+          .limit(1)
+          .get();
       if (qs.docs.isEmpty) {
         setState(() => _isLoading = false);
-        _showErrorBanner(Translations.get('Admin not found with this phone number.', isUrdu));
+        _showErrorBanner(
+          Translations.get('Admin not found with this phone number.', isUrdu),
+        );
         return;
       }
-      
+
       String adminDocId = qs.docs.first.id;
-      
+
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: phone,
         verificationCompleted: (PhoneAuthCredential credential) async {
@@ -335,7 +378,9 @@ class _LoginScreenState extends State<LoginScreen> {
           controller: otpController,
           keyboardType: TextInputType.number,
           maxLength: 6,
-          decoration: InputDecoration(hintText: Translations.get('6-digit code', isUrdu)),
+          decoration: InputDecoration(
+            hintText: Translations.get('6-digit code', isUrdu),
+          ),
         ),
         actions: [
           TextButton(
@@ -351,7 +396,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   verificationId: verificationId,
                   smsCode: otpController.text.trim(),
                 );
-                await _signInAdminWithCredential(credential, adminDocId, isUrdu);
+                await _signInAdminWithCredential(
+                  credential,
+                  adminDocId,
+                  isUrdu,
+                );
               } catch (e) {
                 setState(() => _isLoading = false);
                 _showErrorBanner(Translations.get('Invalid OTP', isUrdu));
@@ -364,17 +413,26 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Future<void> _signInAdminWithCredential(PhoneAuthCredential credential, String adminDocId, bool isUrdu) async {
+  Future<void> _signInAdminWithCredential(
+    PhoneAuthCredential credential,
+    String adminDocId,
+    bool isUrdu,
+  ) async {
     try {
       await FirebaseAuth.instance.signInWithCredential(credential);
-      
+
       final SaPrefs = await SharedPreferences.getInstance();
       await SaPrefs.setString('adminId', adminDocId);
       FirebaseService.setCachedAdminId(adminDocId);
 
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-          await _completeAdminLogin(adminDocId, user.email, isUrdu, user.phoneNumber ?? '');
+        await _completeAdminLogin(
+          adminDocId,
+          user.email,
+          isUrdu,
+          user.phoneNumber ?? '',
+        );
       }
     } catch (e) {
       setState(() => _isLoading = false);
@@ -382,7 +440,12 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _completeAdminLogin(String uid, String? userEmail, bool isUrdu, String identifier) async {
+  Future<void> _completeAdminLogin(
+    String uid,
+    String? userEmail,
+    bool isUrdu,
+    String identifier,
+  ) async {
     // --- EMERGENCY BYPASS: feepal@gmail.com ---
     if (identifier.trim().toLowerCase() == 'feepal@gmail.com') {
       debugPrint("⚡ [SuperAdmin] Emergency Bypass Triggered!");
@@ -390,12 +453,14 @@ class _LoginScreenState extends State<LoginScreen> {
       await SaPrefs.setBool('isLoggedIn', true);
       await SaPrefs.setString('userRole', 'super_admin');
       await SaPrefs.setString('adminId', uid);
-      
+
       if (mounted) {
         navigateWithLoader(context, () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const SuperAdminDashboard()),
+            MaterialPageRoute(
+              builder: (context) => const SuperAdminDashboard(),
+            ),
           );
         });
       }
@@ -405,7 +470,7 @@ class _LoginScreenState extends State<LoginScreen> {
     // --- ROLE GUARD: Verify Firestore doc exists in 'admins' ---
     final adminData = await _firebaseService.getAdminData(uid);
     final role = adminData?['role'];
-    
+
     if (adminData == null || (role != 'admin' && role != 'super_admin')) {
       await FirebaseAuth.instance.signOut();
       setState(() => _isLoading = false);
@@ -418,16 +483,19 @@ class _LoginScreenState extends State<LoginScreen> {
     // --- ACCOUNT SUSPENSION GUARD ---
     final String? status = adminData['accountStatus'] ?? adminData['status'];
     bool isDisabled = (status == 'suspended' || status == 'disabled');
-    bool isExpired = role != 'super_admin' && 
-_firebaseService.isSubscriptionExpired(adminData);
-    
+    bool isExpired =
+        role != 'super_admin' &&
+        _firebaseService.isSubscriptionExpired(adminData);
+
     if (isDisabled || isExpired) {
       if (mounted) {
         navigateWithLoader(context, () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => SubscriptionScreen(adminData: 
-adminData, isLockedMode: true)),
+            MaterialPageRoute(
+              builder: (context) =>
+                  SubscriptionScreen(adminData: adminData, isLockedMode: true),
+            ),
           );
         });
       }
@@ -436,7 +504,7 @@ adminData, isLockedMode: true)),
 
     // Success: Initialize and navigate
     await _firebaseService.ensureSuperAdminDocument(uid, userEmail ?? '');
-    
+
     String? subStatus = adminData['subscriptionStatus'];
 
     if (mounted) {
@@ -444,18 +512,25 @@ adminData, isLockedMode: true)),
         if (role == 'super_admin') {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const SuperAdminDashboard()),
+            MaterialPageRoute(
+              builder: (context) => const SuperAdminDashboard(),
+            ),
           );
-        } else if (subStatus == null || subStatus == 'approved' || subStatus == 'active') {
+        } else if (subStatus == null ||
+            subStatus == 'approved' ||
+            subStatus == 'active') {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
+            MaterialPageRoute(
+              builder: (context) => const AdminDashboardScreen(),
+            ),
           );
         } else {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => SubscriptionScreen(adminData: 
-adminData)),
+            MaterialPageRoute(
+              builder: (context) => SubscriptionScreen(adminData: adminData),
+            ),
           );
         }
       });
@@ -481,11 +556,17 @@ adminData)),
             children: [
               Text(
                 Translations.get("Select Role", isUrdu),
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
-                Translations.get("Which account password do you want to reset?", isUrdu),
+                Translations.get(
+                  "Which account password do you want to reset?",
+                  isUrdu,
+                ),
                 style: const TextStyle(fontSize: 15, color: Colors.black54),
               ),
               const SizedBox(height: 30),
@@ -493,11 +574,29 @@ adminData)),
                 contentPadding: EdgeInsets.zero,
                 leading: Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.admin_panel_settings, color: Colors.blue, size: 28),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.admin_panel_settings,
+                    color: Colors.blue,
+                    size: 28,
+                  ),
                 ),
-                title: Text(Translations.get("School Admin", isUrdu), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                subtitle: Text(Translations.get("Receive a password reset link via email", isUrdu)),
+                title: Text(
+                  Translations.get("School Admin", isUrdu),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                subtitle: Text(
+                  Translations.get(
+                    "Receive a password reset link via email",
+                    isUrdu,
+                  ),
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.pop(context);
@@ -509,18 +608,38 @@ adminData)),
                 contentPadding: EdgeInsets.zero,
                 leading: Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.family_restroom, color: Colors.green, size: 28),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.family_restroom,
+                    color: Colors.green,
+                    size: 28,
+                  ),
                 ),
-                title: Text(Translations.get("School Parent", isUrdu), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                subtitle: Text(Translations.get("Reset your password using an email OTP code", isUrdu)),
+                title: Text(
+                  Translations.get("School Parent", isUrdu),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                subtitle: Text(
+                  Translations.get(
+                    "Reset your password using an email OTP code",
+                    isUrdu,
+                  ),
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ParentForgotPasswordScreen(initialEmail: _emailController.text),
+                      builder: (context) => ParentForgotPasswordScreen(
+                        initialEmail: _emailController.text,
+                      ),
                     ),
                   );
                 },
@@ -534,27 +653,39 @@ adminData)),
   }
 
   void _showAdminResetDialog(BuildContext context, bool isUrdu) {
-    final TextEditingController adminEmailController = TextEditingController(text: _emailController.text);
+    final TextEditingController adminEmailController = TextEditingController(
+      text: _emailController.text,
+    );
     bool isSending = false;
-    
+
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               title: Row(
                 children: [
                   const Icon(Icons.admin_panel_settings, color: Colors.blue),
                   const SizedBox(width: 10),
-                  Text(Translations.get("Admin Password Reset", isUrdu), style: const TextStyle(fontSize: 18)),
+                  Text(
+                    Translations.get("Admin Password Reset", isUrdu),
+                    style: const TextStyle(fontSize: 18),
+                  ),
                 ],
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(Translations.get("Enter your admin email address to receive a password reset link.", isUrdu)),
+                  Text(
+                    Translations.get(
+                      "Enter your admin email address to receive a password reset link.",
+                      isUrdu,
+                    ),
+                  ),
                   const SizedBox(height: 20),
                   TextField(
                     controller: adminEmailController,
@@ -562,7 +693,9 @@ adminData)),
                     decoration: InputDecoration(
                       hintText: Translations.get("Email Address", isUrdu),
                       prefixIcon: const Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ],
@@ -570,49 +703,73 @@ adminData)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(Translations.get("Cancel", isUrdu), style: const TextStyle(color: Colors.grey)),
+                  child: Text(
+                    Translations.get("Cancel", isUrdu),
+                    style: const TextStyle(color: Colors.grey),
+                  ),
                 ),
                 ElevatedButton(
-                  onPressed: isSending ? null : () async {
-                    if (adminEmailController.text.isEmpty) return;
-                    setState(() => isSending = true);
-                    try {
-                      await FirebaseAuth.instance.sendPasswordResetEmail(email: adminEmailController.text.trim());
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(Translations.get("Password reset email sent. Please check your inbox.", isUrdu)),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(e.toString()),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    } finally {
-                      if (mounted) setState(() => isSending = false);
-                    }
-                  },
+                  onPressed: isSending
+                      ? null
+                      : () async {
+                          if (adminEmailController.text.isEmpty) return;
+                          setState(() => isSending = true);
+                          try {
+                            await FirebaseAuth.instance.sendPasswordResetEmail(
+                              email: adminEmailController.text.trim(),
+                            );
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    Translations.get(
+                                      "Password reset email sent. Please check your inbox.",
+                                      isUrdu,
+                                    ),
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(e.toString()),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (mounted) setState(() => isSending = false);
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                  child: isSending 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : Text(Translations.get("Send Link", isUrdu), style: const TextStyle(color: Colors.white)),
+                  child: isSending
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          Translations.get("Send Link", isUrdu),
+                          style: const TextStyle(color: Colors.white),
+                        ),
                 ),
               ],
             );
-          }
+          },
         );
-      }
+      },
     );
   }
 
@@ -642,326 +799,260 @@ adminData)),
                       child: Column(
                         children: [
                           // ... existing children ...
-                    // Focused Top Bar
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20.0,
-                        vertical: 20.0,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            Translations.get('Login', isUrdu),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                          // Focused Top Bar
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0,
+                              vertical: 20.0,
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  Translations.get('Login', isUrdu),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
 
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.fromLTRB(24, 10, 24, 30),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      padding: const EdgeInsets.all(25.0),
-                      child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 10),
-                              // Login As
-                              Text(
-                                Translations.get('Login as', isUrdu),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.fromLTRB(24, 10, 24, 30),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            padding: const EdgeInsets.all(25.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 10),
+                                // Login As
+                                Text(
+                                  Translations.get('Login as', isUrdu),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 20),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: GestureDetector(
-                                      onTap: () => setState(
-                                        () => isParentSelected = false,
-                                      ),
-                                      child: Container(
-                                        height: 55,
-                                        decoration: BoxDecoration(
-                                          color: !isParentSelected
-                                              ? _primaryAccentColor
-                                              : Colors.grey[100],
-                                          borderRadius:
-                                              BorderRadius.circular(15),
+                                const SizedBox(height: 20),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => setState(
+                                          () => isParentSelected = false,
                                         ),
-                                        child: Center(
-                                          child: Text(
-                                            Translations.get(
-                                              'Admin',
-                                              isUrdu,
+                                        child: Container(
+                                          height: 55,
+                                          decoration: BoxDecoration(
+                                            color: !isParentSelected
+                                                ? _primaryAccentColor
+                                                : Colors.grey[100],
+                                            borderRadius: BorderRadius.circular(
+                                              15,
                                             ),
-                                            style: TextStyle(
-                                              color: !isParentSelected
-                                                  ? Colors.white
-                                                  : Colors.black54,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              Translations.get('Admin', isUrdu),
+                                              style: TextStyle(
+                                                color: !isParentSelected
+                                                    ? Colors.white
+                                                    : Colors.black54,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: GestureDetector(
-                                      onTap: () => setState(
-                                        () => isParentSelected = true,
-                                      ),
-                                      child: Container(
-                                        height: 55,
-                                        decoration: BoxDecoration(
-                                          color: isParentSelected
-                                              ? _primaryAccentColor
-                                              : Colors.grey[100],
-                                          borderRadius:
-                                              BorderRadius.circular(15),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => setState(
+                                          () => isParentSelected = true,
                                         ),
-                                        child: Center(
-                                          child: Text(
-                                            Translations.get(
-                                              'Parent',
-                                              isUrdu,
+                                        child: Container(
+                                          height: 55,
+                                          decoration: BoxDecoration(
+                                            color: isParentSelected
+                                                ? _primaryAccentColor
+                                                : Colors.grey[100],
+                                            borderRadius: BorderRadius.circular(
+                                              15,
                                             ),
-                                            style: TextStyle(
-                                              color: isParentSelected
-                                                  ? Colors.white
-                                                  : Colors.black54,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              Translations.get(
+                                                'Parent',
+                                                isUrdu,
+                                              ),
+                                              style: TextStyle(
+                                                color: isParentSelected
+                                                    ? Colors.white
+                                                    : Colors.black54,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 35),
-
-                              // Email / Phone
-                              Text(
-                                Translations.get('Email / Phone', isUrdu),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-                              TextField(
-                                controller: _emailController,
-                                onChanged: (v) => _validateInputs(isUrdu),
-                                decoration: InputDecoration(
-                                  hintText: Translations.get(
-                                    'Enter email or phone',
-                                    isUrdu,
-                                  ),
-                                  hintStyle: const TextStyle(
-                                    color: Colors.black38,
+                                const SizedBox(height: 35),
+
+                                // Email / Phone
+                                Text(
+                                  Translations.get('Email / Phone', isUrdu),
+                                  style: const TextStyle(
                                     fontSize: 14,
-                                  ),
-                                  prefixIcon: const Icon(
-                                    Icons.person_outline,
-                                    color: Colors.black54,
-                                  ),
-                                  errorText: _emailError,
-                                  errorStyle: const TextStyle(height: 0.8),
-                                  filled: true,
-                                  fillColor: Colors.grey[50],
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(
-                                        vertical: 18,
-                                        horizontal: 15,
-                                      ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  errorBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                    borderSide: const BorderSide(color: Colors.redAccent, width: 1),
-                                  ),
-                                  focusedErrorBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                    borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
                                   ),
                                 ),
-                              ),
-
-                              const SizedBox(height: 25),
-
-                              // Password
-                              Text(
-                                Translations.get('Password', isUrdu),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              TextField(
-                                controller: _passwordController,
-                                obscureText: _obscurePassword,
-                                onChanged: (v) => _validateInputs(isUrdu),
-                                decoration: InputDecoration(
-                                  hintText: '********',
-                                  hintStyle: const TextStyle(
-                                    color: Colors.black38,
-                                    fontSize: 14,
-                                  ),
-                                  prefixIcon: const Icon(
-                                    Icons.lock_outline,
-                                    color: Colors.black54,
-                                  ),
-                                  errorText: _passwordError,
-                                  errorStyle: const TextStyle(height: 0.8),
-                                  filled: true,
-                                  fillColor: Colors.grey[50],
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility_off
-                                          : Icons.visibility,
-                                      color: _primaryAccentColor,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _obscurePassword = !_obscurePassword;
-                                      });
-                                    },
-                                  ),
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(
-                                        vertical: 18,
-                                        horizontal: 15,
-                                      ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  errorBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                    borderSide: const BorderSide(color: Colors.redAccent, width: 1),
-                                  ),
-                                  focusedErrorBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                    borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              // Forgot Password
-                              Align(
-                                alignment: isUrdu
-                                    ? Alignment.centerLeft
-                                    : Alignment.centerRight,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    _showForgotPasswordRoleSheet(context, isUrdu);
-                                  },
-                                  child: Text(
-                                    Translations.get(
-                                      'Forgot Password?',
+                                const SizedBox(height: 10),
+                                TextField(
+                                  controller: _emailController,
+                                  onChanged: (v) => _validateInputs(isUrdu),
+                                  decoration: InputDecoration(
+                                    hintText: Translations.get(
+                                      'Enter email or phone',
                                       isUrdu,
                                     ),
-                                    style: TextStyle(
-                                      color: Colors.blue[600],
+                                    hintStyle: const TextStyle(
+                                      color: Colors.black38,
                                       fontSize: 14,
-                                      fontWeight: FontWeight.bold,
                                     ),
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 40),
-
-                              // Login Button
-                              SizedBox(
-                                width: double.infinity,
-                                height: 60,
-                                child: ElevatedButton(
-                                  onPressed: _isLoading
-                                      ? null
-                                      : () => _handleLogin(isUrdu),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _primaryAccentColor,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        15,
-                                      ),
-                                    ),
-                                    elevation: 0,
-                                  ),
-                                  child: _isLoading
-                                      ? const SizedBox(
-                                          height: 25,
-                                          width: 25,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 3,
-                                          ),
-                                        )
-                                      : Text(
-                                          Translations.get('Login', isUrdu),
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 30),
-
-                              // Sign up
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    Translations.get(
-                                      "Don't have an account? ",
-                                      isUrdu,
-                                    ),
-                                    style: const TextStyle(
+                                    prefixIcon: const Icon(
+                                      Icons.person_outline,
                                       color: Colors.black54,
-                                      fontSize: 14,
+                                    ),
+                                    errorText: _emailError,
+                                    errorStyle: const TextStyle(height: 0.8),
+                                    filled: true,
+                                    fillColor: Colors.grey[50],
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 18,
+                                      horizontal: 15,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                      borderSide: const BorderSide(
+                                        color: Colors.redAccent,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    focusedErrorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                      borderSide: const BorderSide(
+                                        color: Colors.redAccent,
+                                        width: 1.5,
+                                      ),
                                     ),
                                   ),
-                                  GestureDetector(
+                                ),
+
+                                const SizedBox(height: 25),
+
+                                // Password
+                                Text(
+                                  Translations.get('Password', isUrdu),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                TextField(
+                                  controller: _passwordController,
+                                  obscureText: _obscurePassword,
+                                  onChanged: (v) => _validateInputs(isUrdu),
+                                  decoration: InputDecoration(
+                                    hintText: '********',
+                                    hintStyle: const TextStyle(
+                                      color: Colors.black38,
+                                      fontSize: 14,
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.lock_outline,
+                                      color: Colors.black54,
+                                    ),
+                                    errorText: _passwordError,
+                                    errorStyle: const TextStyle(height: 0.8),
+                                    filled: true,
+                                    fillColor: Colors.grey[50],
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                        color: _primaryAccentColor,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _obscurePassword = !_obscurePassword;
+                                        });
+                                      },
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 18,
+                                      horizontal: 15,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                      borderSide: const BorderSide(
+                                        color: Colors.redAccent,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    focusedErrorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                      borderSide: const BorderSide(
+                                        color: Colors.redAccent,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 12),
+
+                                // Forgot Password
+                                Align(
+                                  alignment: isUrdu
+                                      ? Alignment.centerLeft
+                                      : Alignment.centerRight,
+                                  child: GestureDetector(
                                     onTap: () {
-                                      navigateWithLoader(context, () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const SignUpScreen(),
-                                          ),
-                                        );
-                                      });
+                                      _showForgotPasswordRoleSheet(
+                                        context,
+                                        isUrdu,
+                                      );
                                     },
                                     child: Text(
-                                      Translations.get('Sign up', isUrdu),
+                                      Translations.get(
+                                        'Forgot Password?',
+                                        isUrdu,
+                                      ),
                                       style: TextStyle(
                                         color: Colors.blue[600],
                                         fontSize: 14,
@@ -969,20 +1060,95 @@ adminData)),
                                       ),
                                     ),
                                   ),
-                                ],
-                              ),
-                          const SizedBox(height: 10),
+                                ),
+
+                                const SizedBox(height: 40),
+
+                                // Login Button
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 60,
+                                  child: ElevatedButton(
+                                    onPressed: _isLoading
+                                        ? null
+                                        : () => _handleLogin(isUrdu),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _primaryAccentColor,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(15),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            height: 25,
+                                            width: 25,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 3,
+                                            ),
+                                          )
+                                        : Text(
+                                            Translations.get('Login', isUrdu),
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 30),
+
+                                // Sign up
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      Translations.get(
+                                        "Don't have an account? ",
+                                        isUrdu,
+                                      ),
+                                      style: const TextStyle(
+                                        color: Colors.black54,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        navigateWithLoader(context, () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const SignUpScreen(),
+                                            ),
+                                          );
+                                        });
+                                      },
+                                      child: Text(
+                                        Translations.get('Sign up', isUrdu),
+                                        style: TextStyle(
+                                          color: Colors.blue[600],
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ),
-        if (_showChangelog) _buildChangelogOverlay(),
-      ],
-    ),
             bottomNavigationBar: AnimatedOpacity(
               opacity: _showVersion ? 1.0 : 0.0,
               duration: const Duration(seconds: 1),
@@ -1003,210 +1169,6 @@ adminData)),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildChangelogOverlay() {
-    return Stack(
-      children: [
-        // Blurred background
-        Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.4),
-            ),
-          ),
-        ),
-        // Modal content
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.75,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 30,
-                    offset: const Offset(0, 15),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(28),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Header
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF2168F8), Color(0xFF00D4FF)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Icon(Icons.rocket_launch, color: Colors.white, size: 28),
-                          ),
-                          const SizedBox(width: 16),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Changelogs',
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'app version: v1.0.17',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.white70,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Scrollable List
-                    Flexible(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
-                        physics: const BouncingScrollPhysics(),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildChangelogItem(
-                              icon: Icons.document_scanner,
-                              title: 'Implemented OCR Verification',
-                              description: 'Automated fee verification through intelligent OCR scanning of bank stamps.',
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(height: 16),
-                            _buildChangelogItem(
-                              icon: Icons.sync,
-                              title: 'Integrated FeePal Website',
-                              description: 'FeePal App Database is now fully integrated with the FeePal Website.',
-                              color: Colors.teal,
-                            ),
-                            const SizedBox(height: 16),
-                            _buildChangelogItem(
-                              icon: Icons.picture_as_pdf,
-                              title: 'PDF Voucher Generation',
-                              description: 'Implemented comprehensive PDF Voucher generation logic for easy printing.',
-                              color: Colors.purple,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Action Button
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: ElevatedButton(
-                          onPressed: _canCloseChangelog ? () => setState(() => _showChangelog = false) : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2168F8),
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: Colors.grey[300],
-                            disabledForegroundColor: Colors.grey[600],
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: Text(
-                            _canCloseChangelog ? "Got it, Let's Go!" : 'Reading (3s)...',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChangelogItem({required IconData icon, required String title, required String description, required Color color}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.1), width: 1),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 20, color: color),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

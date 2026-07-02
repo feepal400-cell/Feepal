@@ -13,10 +13,12 @@ class ChangePasswordScreen extends StatefulWidget {
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final FirebaseService _firebaseService = FirebaseService();
-  final TextEditingController _currentPasswordController = TextEditingController();
+  final TextEditingController _currentPasswordController =
+      TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
   bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
@@ -46,11 +48,19 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       case 'incorrect-password':
         return Translations.get("Incorrect current password.", isUrdu);
       case 'network-request-failed':
-        return Translations.get("Network error. Please check your internet connection.", isUrdu);
+        return Translations.get(
+          "Network error. Please check your internet connection.",
+          isUrdu,
+        );
       case 'too-many-requests':
-        return Translations.get("Too many attempts. Please try again later.", isUrdu);
+        return Translations.get(
+          "Too many attempts. Please try again later.",
+          isUrdu,
+        );
       default:
-        return code.contains('/') ? Translations.get("Operation failed. Please try again.", isUrdu) : code;
+        return code.contains('/')
+            ? Translations.get("Operation failed. Please try again.", isUrdu)
+            : code;
     }
   }
 
@@ -89,7 +99,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       _newError = Translations.get('Minimum 6 characters', isUrdu);
       isValid = false;
     } else if (newPass == currentPass && currentPass.isNotEmpty) {
-      _newError = Translations.get('New password cannot be same as current', isUrdu);
+      _newError = Translations.get(
+        'New password cannot be same as current',
+        isUrdu,
+      );
       isValid = false;
     } else {
       _newError = null;
@@ -124,8 +137,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     try {
       // 1. Verify Current Password
-      final isCurrentCorrect = await _firebaseService.verifyCurrentPassword(currentPass, widget.role);
-      
+      final isCurrentCorrect = await _firebaseService.verifyCurrentPassword(
+        currentPass,
+        widget.role,
+      );
+
       if (!isCurrentCorrect) {
         setState(() => _isLoading = false);
         _showErrorBanner(_mapErrorCode('incorrect-password', isUrdu));
@@ -135,30 +151,35 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       // 2. Get User Email/Info
       String? email;
       String? uid;
-      
+
       if (widget.role == 'admin') {
         final profile = await _firebaseService.getAdminProfile();
         email = profile?['email'];
         uid = _firebaseService.currentAdminId;
       } else {
         final session = _firebaseService.selectedStudent;
-        email = session?['parentEmail'] ?? session?['parentPhone']; // identifier
+        email =
+            session?['parentEmail'] ?? session?['parentPhone']; // identifier
         uid = session?['docId'];
       }
 
       if (email == null || email.isEmpty) {
         setState(() => _isLoading = false);
-        _showErrorBanner(Translations.get('User contact info not found.', isUrdu));
+        _showErrorBanner(
+          Translations.get('User contact info not found.', isUrdu),
+        );
         return;
       }
 
       // 3. Send OTP
       final student = _firebaseService.selectedStudent;
       bool otpSent = await _firebaseService.sendOTP(
-        email: email, 
-        uid: uid ?? "", 
+        email: email,
+        uid: uid ?? "",
         isParent: widget.role == 'parent',
-        adminId: widget.role == 'parent' ? (student?['adminId'] as String?) : null,
+        adminId: widget.role == 'parent'
+            ? (student?['adminId'] as String?)
+            : null,
       );
 
       if (otpSent) {
@@ -172,13 +193,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 role: widget.role,
                 newPassword: newPass,
                 currentPassword: currentPass,
-                adminId: widget.role == 'parent' ? (student?['adminId'] as String?) : null,
+                adminId: widget.role == 'parent'
+                    ? (student?['adminId'] as String?)
+                    : null,
               ),
             ),
           );
         }
       } else {
-        _showErrorBanner(Translations.get('Failed to send OTP. Please try again.', isUrdu));
+        _showErrorBanner(
+          Translations.get('Failed to send OTP. Please try again.', isUrdu),
+        );
       }
     } catch (e) {
       _showErrorBanner(_mapErrorCode(e.toString(), isUrdu));
@@ -187,12 +212,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final bool isParent = widget.role == 'parent';
-    final List<Color> gradientColors = isParent 
+    final List<Color> gradientColors = isParent
         ? [const Color(0xFF00D4FF), const Color(0xFF009BCB)]
         : [const Color(0xFF2168F8), const Color(0xFF00D4FF)];
 
@@ -207,112 +230,156 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: gradientColors,
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    _buildTopBar(isUrdu),
-                    Expanded(
-                      child: Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.fromLTRB(24, 10, 24, 20),
-                        padding: const EdgeInsets.all(25.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            )
-                          ],
-                        ),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 20),
-                              Text(
-                                Translations.get('Change Password', isUrdu),
-                                style: TextStyle(
-                                  fontSize: 22, 
-                                  fontWeight: FontWeight.bold, 
-                                  color: gradientColors[0],
+                    gradient: LinearGradient(
+                      colors: gradientColors,
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        _buildTopBar(isUrdu),
+                        Expanded(
+                          child: Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.fromLTRB(24, 10, 24, 20),
+                            padding: const EdgeInsets.all(25.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
                                 ),
+                              ],
+                            ),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    Translations.get('Change Password', isUrdu),
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: gradientColors[0],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    Translations.get(
+                                      'Secure your account by updating your password.',
+                                      isUrdu,
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 40),
+
+                                  _buildTextField(
+                                    controller: _currentPasswordController,
+                                    label: Translations.get(
+                                      'Current Password',
+                                      isUrdu,
+                                    ),
+                                    hint: '********',
+                                    icon: Icons.lock_outline,
+                                    obscureText: _obscureCurrent,
+                                    errorText: _currentError,
+                                    onChanged: (v) => _validateInputs(isUrdu),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscureCurrent
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                      ),
+                                      onPressed: () => setState(
+                                        () =>
+                                            _obscureCurrent = !_obscureCurrent,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  _buildTextField(
+                                    controller: _newPasswordController,
+                                    label: Translations.get(
+                                      'New Password',
+                                      isUrdu,
+                                    ),
+                                    hint: Translations.get(
+                                      'Minimum 6 characters',
+                                      isUrdu,
+                                    ),
+                                    icon: Icons.vpn_key_outlined,
+                                    obscureText: _obscureNew,
+                                    errorText: _newError,
+                                    onChanged: (v) => _validateInputs(isUrdu),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscureNew
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _obscureNew = !_obscureNew,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  _buildTextField(
+                                    controller: _confirmPasswordController,
+                                    label: Translations.get(
+                                      'Confirm New Password',
+                                      isUrdu,
+                                    ),
+                                    hint: Translations.get(
+                                      'Repeat your password',
+                                      isUrdu,
+                                    ),
+                                    icon: Icons.lock_reset_outlined,
+                                    obscureText: _obscureConfirm,
+                                    errorText: _confirmError,
+                                    onChanged: (v) => _validateInputs(isUrdu),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscureConfirm
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                      ),
+                                      onPressed: () => setState(
+                                        () =>
+                                            _obscureConfirm = !_obscureConfirm,
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 40),
+
+                                  _buildPrimaryButton(
+                                    text: Translations.get(
+                                      'Change Password',
+                                      isUrdu,
+                                    ),
+                                    color: gradientColors[0],
+                                    onPressed: _handleChangePassword,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 10),
-                              Text(
-                                Translations.get('Secure your account by updating your password.', isUrdu),
-                                style: const TextStyle(fontSize: 14, color: Colors.black54),
-                              ),
-                              const SizedBox(height: 40),
-                              
-                              _buildTextField(
-                                controller: _currentPasswordController,
-                                label: Translations.get('Current Password', isUrdu),
-                                hint: '********',
-                                icon: Icons.lock_outline,
-                                obscureText: _obscureCurrent,
-                                errorText: _currentError,
-                                onChanged: (v) => _validateInputs(isUrdu),
-                                suffixIcon: IconButton(
-                                  icon: Icon(_obscureCurrent ? Icons.visibility_off : Icons.visibility),
-                                  onPressed: () => setState(() => _obscureCurrent = !_obscureCurrent),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              
-                              _buildTextField(
-                                controller: _newPasswordController,
-                                label: Translations.get('New Password', isUrdu),
-                                hint: Translations.get('Minimum 6 characters', isUrdu),
-                                icon: Icons.vpn_key_outlined,
-                                obscureText: _obscureNew,
-                                errorText: _newError,
-                                onChanged: (v) => _validateInputs(isUrdu),
-                                suffixIcon: IconButton(
-                                  icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility),
-                                  onPressed: () => setState(() => _obscureNew = !_obscureNew),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              
-                              _buildTextField(
-                                controller: _confirmPasswordController,
-                                label: Translations.get('Confirm New Password', isUrdu),
-                                hint: Translations.get('Repeat your password', isUrdu),
-                                icon: Icons.lock_reset_outlined,
-                                obscureText: _obscureConfirm,
-                                errorText: _confirmError,
-                                onChanged: (v) => _validateInputs(isUrdu),
-                                suffixIcon: IconButton(
-                                  icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
-                                  onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 40),
-                              
-                              _buildPrimaryButton(
-                                text: Translations.get('Change Password', isUrdu),
-                                color: gradientColors[0],
-                                onPressed: _handleChangePassword,
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
                 _topBannerNotifier(),
               ],
             ),
@@ -328,9 +395,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       child: Row(
         children: [
           Container(
-            height: 45, width: 45,
+            height: 45,
+            width: 45,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(15),
             ),
             child: IconButton(
@@ -341,7 +409,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           const SizedBox(width: 15),
           Text(
             Translations.get('Settings', isUrdu),
-            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -361,7 +433,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -376,9 +455,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             errorStyle: const TextStyle(height: 0.8),
             filled: true,
             fillColor: Colors.grey[50],
-            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 15),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 18,
+              horizontal: 15,
+            ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15), 
+              borderRadius: BorderRadius.circular(15),
               borderSide: BorderSide.none,
             ),
             errorBorder: OutlineInputBorder(
@@ -411,17 +493,24 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.redAccent.withOpacity(0.2), width: 1.5),
+            border: Border.all(
+              color: Colors.redAccent.withValues(alpha: 0.2),
+              width: 1.5,
+            ),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.redAccent.withOpacity(0.1),
+                  color: Colors.redAccent.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.error_rounded, color: Colors.redAccent, size: 24),
+                child: const Icon(
+                  Icons.error_rounded,
+                  color: Colors.redAccent,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 15),
               Expanded(
@@ -441,7 +530,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     Text(
                       _bannerMessage ?? "",
                       style: TextStyle(
-                        color: Colors.redAccent.withOpacity(0.8),
+                        color: Colors.redAccent.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w500,
                         fontSize: 13,
                       ),
@@ -450,7 +539,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close_rounded, size: 22, color: Colors.redAccent),
+                icon: const Icon(
+                  Icons.close_rounded,
+                  size: 22,
+                  color: Colors.redAccent,
+                ),
                 onPressed: () => setState(() => _showBanner = false),
               ),
             ],
@@ -460,7 +553,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     );
   }
 
-  Widget _buildPrimaryButton({required String text, required Color color, required VoidCallback onPressed}) {
+  Widget _buildPrimaryButton({
+    required String text,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
     return SizedBox(
       width: double.infinity,
       height: 60,
@@ -469,12 +566,20 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
           elevation: 0,
         ),
-        child: _isLoading 
-          ? const CircularProgressIndicator(color: Colors.white)
-          : Text(text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        child: _isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }

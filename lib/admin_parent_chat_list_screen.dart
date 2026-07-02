@@ -8,7 +8,8 @@ class AdminParentChatListScreen extends StatefulWidget {
   const AdminParentChatListScreen({super.key});
 
   @override
-  State<AdminParentChatListScreen> createState() => _AdminParentChatListScreenState();
+  State<AdminParentChatListScreen> createState() =>
+      _AdminParentChatListScreenState();
 }
 
 class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
@@ -40,7 +41,9 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
           // --- CHAT LIST ---
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _firebaseService.getAdminParentChatRoomsStream(_currentAdminId),
+              stream: _firebaseService.getAdminParentChatRoomsStream(
+                _currentAdminId,
+              ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
@@ -62,7 +65,9 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
                     ? allRooms
                     : allRooms.where((doc) {
                         var room = doc.data() as Map<String, dynamic>;
-                        String parentName = (room['parentName'] ?? '').toString().toLowerCase();
+                        String parentName = (room['parentName'] ?? '')
+                            .toString()
+                            .toLowerCase();
                         return parentName.contains(_searchQuery.toLowerCase());
                       }).toList();
 
@@ -71,11 +76,18 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off_rounded, size: 48, color: Colors.grey[300]),
+                        Icon(
+                          Icons.search_off_rounded,
+                          size: 48,
+                          color: Colors.grey[300],
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           'No results for "$_searchQuery"',
-                          style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),
@@ -102,7 +114,12 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
   // ===== GRADIENT HEADER =====
   Widget _buildHeader() {
     return Container(
-      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 12, 20, 20),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 12,
+        20,
+        20,
+      ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF7B1FA2), Color(0xFF9E38FF), Color(0xFFD500F9)],
@@ -128,7 +145,11 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
             children: [
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 22),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
               const Expanded(
                 child: Text(
@@ -147,9 +168,9 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
           // Search bar
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             child: TextField(
               controller: _searchController,
@@ -158,11 +179,21 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
               cursorColor: Colors.white,
               decoration: InputDecoration(
                 hintText: 'Search parents...',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14.5),
-                prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withOpacity(0.7)),
+                hintStyle: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  fontSize: 14.5,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: Colors.white.withValues(alpha: 0.7),
+                ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: Icon(Icons.close_rounded, color: Colors.white.withOpacity(0.7), size: 20),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: Colors.white.withValues(alpha: 0.7),
+                          size: 20,
+                        ),
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _searchQuery = '');
@@ -192,8 +223,8 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF9E38FF).withOpacity(0.08),
-                  const Color(0xFFD500F9).withOpacity(0.04),
+                  const Color(0xFF9E38FF).withValues(alpha: 0.08),
+                  const Color(0xFFD500F9).withValues(alpha: 0.04),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -217,10 +248,7 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
           const SizedBox(height: 8),
           Text(
             'When parents contact you, they\'ll appear here',
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 13,
-            ),
+            style: TextStyle(color: Colors.grey[400], fontSize: 13),
           ),
         ],
       ),
@@ -256,13 +284,23 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         return FutureBuilder<DocumentSnapshot?>(
-          future: room['parentName'] == null 
-              ? FirebaseFirestore.instance.collection('admins').doc(_currentAdminId).collection('students').doc(parentId).get()
+          future: room['parentName'] == null
+              ? FirebaseFirestore.instance
+                    .collection('admins')
+                    .doc(_currentAdminId)
+                    .collection('students')
+                    .doc(parentId)
+                    .get()
               : Future.value(null),
           builder: (context, snapshot) {
             String parentName = fallbackName;
-            if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
-              parentName = (snapshot.data!.data() as Map<String, dynamic>)['parentName'] ?? 'Parent';
+            if (snapshot.hasData &&
+                snapshot.data != null &&
+                snapshot.data!.exists) {
+              parentName =
+                  (snapshot.data!.data()
+                      as Map<String, dynamic>)['parentName'] ??
+                  'Parent';
             }
 
             return Opacity(
@@ -272,7 +310,11 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
                 child: GestureDetector(
                   onTap: () async {
                     // Mark as read
-                    await _firebaseService.markParentAdminChatAsRead(parentId, _currentAdminId, 'admin');
+                    await _firebaseService.markParentAdminChatAsRead(
+                      parentId,
+                      _currentAdminId,
+                      'admin',
+                    );
 
                     if (mounted) {
                       Navigator.push(
@@ -294,7 +336,9 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: hasUnread ? const Color(0xFF9E38FF) : Colors.grey[200]!,
+                        color: hasUnread
+                            ? const Color(0xFF9E38FF)
+                            : Colors.grey[200]!,
                         width: hasUnread ? 1.5 : 1,
                       ),
                       boxShadow: [
@@ -322,9 +366,13 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    parentName.isNotEmpty ? parentName[0].toUpperCase() : 'P',
+                                    parentName.isNotEmpty
+                                        ? parentName[0].toUpperCase()
+                                        : 'P',
                                     style: TextStyle(
-                                      color: hasUnread ? const Color(0xFF9E38FF) : Colors.grey[600],
+                                      color: hasUnread
+                                          ? const Color(0xFF9E38FF)
+                                          : Colors.grey[600],
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -341,7 +389,10 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF9E38FF),
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2),
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -353,13 +404,16 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
                                       child: Text(
                                         parentName,
                                         style: TextStyle(
-                                          fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
+                                          fontWeight: hasUnread
+                                              ? FontWeight.bold
+                                              : FontWeight.w600,
                                           fontSize: 16,
                                           color: Colors.black87,
                                         ),
@@ -371,8 +425,12 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
                                       timeStr,
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: hasUnread ? const Color(0xFF9E38FF) : Colors.grey[500],
-                                        fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
+                                        color: hasUnread
+                                            ? const Color(0xFF9E38FF)
+                                            : Colors.grey[500],
+                                        fontWeight: hasUnread
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
                                       ),
                                     ),
                                   ],
@@ -384,9 +442,13 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
                                       child: Text(
                                         lastMsg,
                                         style: TextStyle(
-                                          color: hasUnread ? Colors.black87 : Colors.grey[600],
+                                          color: hasUnread
+                                              ? Colors.black87
+                                              : Colors.grey[600],
                                           fontSize: 14,
-                                          fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
+                                          fontWeight: hasUnread
+                                              ? FontWeight.w500
+                                              : FontWeight.normal,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -395,10 +457,15 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
                                     if (hasUnread) ...[
                                       const SizedBox(width: 8),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFF9E38FF),
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                         child: const Text(
                                           'NEW',
@@ -422,7 +489,7 @@ class _AdminParentChatListScreenState extends State<AdminParentChatListScreen> {
                 ),
               ),
             );
-          }
+          },
         );
       },
     );

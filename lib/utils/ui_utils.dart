@@ -4,7 +4,7 @@ import '../language_config.dart';
 class FeePalAlerts {
   static void showError(BuildContext context, String message) {
     final bool isUrdu = languageNotifier.value;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Container(
@@ -14,10 +14,14 @@ class FeePalAlerts {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.error_outline, color: Colors.white, size: 24),
+                child: const Icon(
+                  Icons.error_outline,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 15),
               Expanded(
@@ -57,9 +61,13 @@ class FeePalAlerts {
     );
   }
 
-  static void showSuccess(BuildContext context, String message, {String? title}) {
+  static void showSuccess(
+    BuildContext context,
+    String message, {
+    String? title,
+  }) {
     final bool isUrdu = languageNotifier.value;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Container(
@@ -69,10 +77,14 @@ class FeePalAlerts {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.check_circle_outline, color: Colors.white, size: 24),
+                child: const Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 15),
               Expanded(
@@ -114,7 +126,7 @@ class FeePalAlerts {
 
   static void showWarning(BuildContext context, String message) {
     final bool isUrdu = languageNotifier.value;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Container(
@@ -124,10 +136,14 @@ class FeePalAlerts {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 24),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 15),
               Expanded(

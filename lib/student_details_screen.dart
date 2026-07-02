@@ -15,7 +15,7 @@ class StudentDetailsScreen extends StatefulWidget {
 
 class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
   final FirebaseService _firebaseService = FirebaseService();
-  
+
   // Profile Controllers
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _classController = TextEditingController();
@@ -23,8 +23,9 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
   final TextEditingController _parentNameController = TextEditingController();
   final TextEditingController _parentPhoneController = TextEditingController();
   final TextEditingController _parentEmailController = TextEditingController();
-  final TextEditingController _parentPasswordController = TextEditingController();
-  
+  final TextEditingController _parentPasswordController =
+      TextEditingController();
+
   bool _isEditingProfile = false;
   bool _isSavingProfile = false;
   bool _obscurePassword = true;
@@ -48,10 +49,12 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     _parentEmailController.text = widget.studentData['parentEmail'] ?? '';
     _parentPasswordController.text = widget.studentData['parentPassword'] ?? '';
     _selectedParentStatus = widget.studentData['parentStatus'] ?? 'Standard';
-    
+
     // Initialize SMS Preference
     final prefs = widget.studentData['notificationPreferences'] as Map?;
-    _smsAlertsEnabled = prefs?['sms'] == true || widget.studentData['notifications_preference'] == 'SMS Alerts';
+    _smsAlertsEnabled =
+        prefs?['sms'] == true ||
+        widget.studentData['notifications_preference'] == 'SMS Alerts';
   }
 
   @override
@@ -79,7 +82,9 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         'parentEmail': _parentEmailController.text,
         'parentPassword': _parentPasswordController.text,
         'parentStatus': _selectedParentStatus,
-        'notifications_preference': _smsAlertsEnabled ? 'SMS Alerts' : 'Email Alerts',
+        'notifications_preference': _smsAlertsEnabled
+            ? 'SMS Alerts'
+            : 'Email Alerts',
         'notificationPreferences': {
           'sms': _smsAlertsEnabled,
           'email': !_smsAlertsEnabled,
@@ -88,15 +93,21 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
-      await _firebaseService.addOrUpdateStudent(payload, oldDocId: widget.studentData['docId']);
-      
+      await _firebaseService.addOrUpdateStudent(
+        payload,
+        oldDocId: widget.studentData['docId'],
+      );
+
       if (mounted) {
         setState(() {
           _isSavingProfile = false;
           _isEditingProfile = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Profile updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
@@ -106,14 +117,13 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           _profileError = e.toString().replaceAll('Exception: ', '');
         });
         _scrollController.animateTo(
-          0, 
-          duration: const Duration(milliseconds: 300), 
-          curve: Curves.easeOut
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
         );
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -125,7 +135,10 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            title: Text(Translations.get('Student Details', isUrdu), style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(
+              Translations.get('Student Details', isUrdu),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             backgroundColor: Colors.white,
             elevation: 0,
             bottom: TabBar(
@@ -143,85 +156,146 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               // Profile Tab
               SingleChildScrollView(
                 controller: _scrollController,
-                padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 30),
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  20,
+                  20,
+                  MediaQuery.of(context).padding.bottom + 30,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-              if (_profileError != null) ...[
-                _buildErrorBanner(_profileError!, isUrdu),
-                const SizedBox(height: 20),
-              ],
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    Translations.get('Student Profile', isUrdu),
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                  ),
-                  IconButton(
-                    icon: Icon(_isEditingProfile ? Icons.close : Icons.edit, color: const Color(0xFF2168F8)),
-                    onPressed: () => setState(() => _isEditingProfile = !_isEditingProfile),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _buildInfoField('Student Name', _nameController, Icons.person_outline, isUrdu),
-              const SizedBox(height: 15),
-              _buildInfoField('Class', _classController, Icons.school_outlined, isUrdu),
-              const SizedBox(height: 15),
-              _buildInfoField('Roll Number', _rollController, Icons.numbers_outlined, isUrdu),
-              const SizedBox(height: 25),
-              Text(
-                Translations.get('Parent Information', isUrdu),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-              ),
-              const SizedBox(height: 15),
-              _buildInfoField('Parent Name', _parentNameController, Icons.family_restroom_outlined, isUrdu),
-              const SizedBox(height: 15),
-              _buildInfoField('Parent Email', _parentEmailController, Icons.email_outlined, isUrdu),
-              const SizedBox(height: 15),
-              _buildInfoField('Parent Phone', _parentPhoneController, Icons.phone_outlined, isUrdu),
-              const SizedBox(height: 15),
-              _buildPasswordField(isUrdu),
-              const SizedBox(height: 15),
-              _buildParentStatusDropdown(isUrdu),
-              const SizedBox(height: 30),
-              
-              if (_isEditingProfile)
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    onPressed: _isSavingProfile ? null : _saveProfile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2168F8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    if (_profileError != null) ...[
+                      _buildErrorBanner(_profileError!, isUrdu),
+                      const SizedBox(height: 20),
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          Translations.get('Student Profile', isUrdu),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            _isEditingProfile ? Icons.close : Icons.edit,
+                            color: const Color(0xFF2168F8),
+                          ),
+                          onPressed: () => setState(
+                            () => _isEditingProfile = !_isEditingProfile,
+                          ),
+                        ),
+                      ],
                     ),
-                    child: _isSavingProfile
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(Translations.get('Save Changes', isUrdu), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
+                    const SizedBox(height: 20),
+                    _buildInfoField(
+                      'Student Name',
+                      _nameController,
+                      Icons.person_outline,
+                      isUrdu,
+                    ),
+                    const SizedBox(height: 15),
+                    _buildInfoField(
+                      'Class',
+                      _classController,
+                      Icons.school_outlined,
+                      isUrdu,
+                    ),
+                    const SizedBox(height: 15),
+                    _buildInfoField(
+                      'Roll Number',
+                      _rollController,
+                      Icons.numbers_outlined,
+                      isUrdu,
+                    ),
+                    const SizedBox(height: 25),
+                    Text(
+                      Translations.get('Parent Information', isUrdu),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    _buildInfoField(
+                      'Parent Name',
+                      _parentNameController,
+                      Icons.family_restroom_outlined,
+                      isUrdu,
+                    ),
+                    const SizedBox(height: 15),
+                    _buildInfoField(
+                      'Parent Email',
+                      _parentEmailController,
+                      Icons.email_outlined,
+                      isUrdu,
+                    ),
+                    const SizedBox(height: 15),
+                    _buildInfoField(
+                      'Parent Phone',
+                      _parentPhoneController,
+                      Icons.phone_outlined,
+                      isUrdu,
+                    ),
+                    const SizedBox(height: 15),
+                    _buildPasswordField(isUrdu),
+                    const SizedBox(height: 15),
+                    _buildParentStatusDropdown(isUrdu),
+                    const SizedBox(height: 30),
+
+                    if (_isEditingProfile)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton(
+                          onPressed: _isSavingProfile ? null : _saveProfile,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2168F8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: _isSavingProfile
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : Text(
+                                  Translations.get('Save Changes', isUrdu),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ),
+                      ),
+                  ],
                 ),
-              
-                ],
               ),
-            ),
-            
-            // Fee Management Tab
-            _buildFeeManagementTab(isUrdu),
-          ],
+
+              // Fee Management Tab
+              _buildFeeManagementTab(isUrdu),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildFeeManagementTab(bool isUrdu) {
-    if (widget.studentData['adminId'] == null || widget.studentData['docId'] == null) {
+    if (widget.studentData['adminId'] == null ||
+        widget.studentData['docId'] == null) {
       return const Center(child: Text("Error: Missing student or admin ID."));
     }
     return StreamBuilder<QuerySnapshot>(
-      stream: _firebaseService.getStudentVouchersStream(widget.studentData['adminId'], widget.studentData['docId']),
+      stream: _firebaseService.getStudentVouchersStream(
+        widget.studentData['adminId'],
+        widget.studentData['docId'],
+      ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -231,7 +305,11 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey.shade300),
+                Icon(
+                  Icons.receipt_long_outlined,
+                  size: 64,
+                  color: Colors.grey.shade300,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   Translations.get('No vouchers issued yet.', isUrdu),
@@ -269,8 +347,16 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         }
 
         // Sort each category chronologically (Descending for past, Ascending for next)
-        pastVouchers.sort((a, b) => _parseMonthYear(b['monthYear']).compareTo(_parseMonthYear(a['monthYear'])));
-        nextVouchers.sort((a, b) => _parseMonthYear(a['monthYear']).compareTo(_parseMonthYear(b['monthYear'])));
+        pastVouchers.sort(
+          (a, b) => _parseMonthYear(
+            b['monthYear'],
+          ).compareTo(_parseMonthYear(a['monthYear'])),
+        );
+        nextVouchers.sort(
+          (a, b) => _parseMonthYear(
+            a['monthYear'],
+          ).compareTo(_parseMonthYear(b['monthYear'])),
+        );
 
         return DefaultTabController(
           length: 3,
@@ -300,9 +386,21 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               Expanded(
                 child: TabBarView(
                   children: [
-                    _buildVoucherList(pastVouchers, isUrdu, 'No previous vouchers'),
-                    _buildVoucherList(currentVouchers, isUrdu, 'No vouchers for current month'),
-                    _buildVoucherList(nextVouchers, isUrdu, 'No future vouchers'),
+                    _buildVoucherList(
+                      pastVouchers,
+                      isUrdu,
+                      'No previous vouchers',
+                    ),
+                    _buildVoucherList(
+                      currentVouchers,
+                      isUrdu,
+                      'No vouchers for current month',
+                    ),
+                    _buildVoucherList(
+                      nextVouchers,
+                      isUrdu,
+                      'No future vouchers',
+                    ),
                   ],
                 ),
               ),
@@ -313,16 +411,24 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     );
   }
 
-  Widget _buildVoucherList(List<DocumentSnapshot> vouchers, bool isUrdu, String emptyMsg) {
+  Widget _buildVoucherList(
+    List<DocumentSnapshot> vouchers,
+    bool isUrdu,
+    String emptyMsg,
+  ) {
     if (vouchers.isEmpty) {
       return Center(
-        child: Text(Translations.get(emptyMsg, isUrdu), style: TextStyle(color: Colors.grey)),
+        child: Text(
+          Translations.get(emptyMsg, isUrdu),
+          style: TextStyle(color: Colors.grey),
+        ),
       );
     }
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: vouchers.length,
-      itemBuilder: (context, index) => _buildVoucherCard(vouchers[index], isUrdu),
+      itemBuilder: (context, index) =>
+          _buildVoucherCard(vouchers[index], isUrdu),
     );
   }
 
@@ -343,12 +449,20 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           Container(
             width: 4,
             height: 18,
-            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           const SizedBox(width: 8),
           Text(
             title,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color.withOpacity(0.8), letterSpacing: 0.5),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: color.withValues(alpha: 0.8),
+              letterSpacing: 0.5,
+            ),
           ),
         ],
       ),
@@ -362,8 +476,13 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     final baseFee = (data['baseFee'] ?? 0).toDouble();
     final additional = (data['additionalCharge'] ?? 0).toDouble();
     final penalty = (data['latePenalty'] ?? 0).toDouble();
-    final total = baseFee + additional + ((status == 'unpaid' || status == 'pending_manual') ? _calculatePenaltyIfOverdue(data) : (data['latePenaltyApplied'] ?? 0).toDouble());
-    
+    final total =
+        baseFee +
+        additional +
+        ((status == 'unpaid' || status == 'pending_manual')
+            ? _calculatePenaltyIfOverdue(data)
+            : (data['latePenaltyApplied'] ?? 0).toDouble());
+
     final installments = data['installments'] as List? ?? [];
     final isInstallment = installments.isNotEmpty;
 
@@ -379,7 +498,11 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
         border: Border.all(color: Colors.grey.shade100),
       ),
@@ -395,21 +518,37 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(monthName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(
+                        monthName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
-                        isInstallment ? Translations.get('Installment Plan', isUrdu) : Translations.get('Standard Voucher', isUrdu),
-                        style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                        isInstallment
+                            ? Translations.get('Installment Plan', isUrdu)
+                            : Translations.get('Standard Voucher', isUrdu),
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 if (!isInstallment)
-                  _buildProofAndStatus(data['voucherImageUrl'] ?? data['paymentProofUrl'], status, isUrdu, () => _toggleVoucherStatus(doc.id, status)),
+                  _buildProofAndStatus(
+                    data['voucherImageUrl'] ?? data['paymentProofUrl'],
+                    status,
+                    isUrdu,
+                    () => _toggleVoucherStatus(doc.id, status),
+                  ),
               ],
             ),
           ),
-          
+
           if (isInstallment)
             ...installments.asMap().entries.map((entry) {
               int idx = entry.key;
@@ -418,17 +557,24 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
             }),
 
           const Divider(height: 1),
-          
+
           // Footer
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(Translations.get('Total Amount', isUrdu), style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                Text(
+                  Translations.get('Total Amount', isUrdu),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                ),
                 Text(
                   '${total.toInt()} PKR',
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Color(0xFF1E293B)),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 17,
+                    color: Color(0xFF1E293B),
+                  ),
                 ),
               ],
             ),
@@ -449,7 +595,12 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     return 0.0;
   }
 
-  Widget _buildProofAndStatus(String? proofUrl, String status, bool isUrdu, VoidCallback onToggle) {
+  Widget _buildProofAndStatus(
+    String? proofUrl,
+    String status,
+    bool isUrdu,
+    VoidCallback onToggle,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -462,7 +613,10 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.grey.shade300),
-                image: DecorationImage(image: NetworkImage(proofUrl), fit: BoxFit.cover),
+                image: DecorationImage(
+                  image: NetworkImage(proofUrl),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
@@ -500,20 +654,28 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               height: MediaQuery.of(context).size.height * 0.7,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
               ),
               clipBehavior: Clip.antiAlias,
               child: InteractiveViewer(
                 minScale: 0.5,
                 maxScale: 4.0,
                 child: Image.network(
-                  url, 
+                  url,
                   fit: BoxFit.contain,
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
-                    return const Center(child: CircularProgressIndicator(color: Colors.white));
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
                   },
-                  errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.broken_image, color: Colors.white, size: 50)),
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Icon(
+                      Icons.broken_image,
+                      color: Colors.white,
+                      size: 50,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -545,14 +707,24 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isPaid ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+          color: isPaid
+              ? Colors.green.withValues(alpha: 0.1)
+              : Colors.orange.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isPaid ? Colors.green.withOpacity(0.3) : Colors.orange.withOpacity(0.3)),
+          border: Border.all(
+            color: isPaid
+                ? Colors.green.withValues(alpha: 0.3)
+                : Colors.orange.withValues(alpha: 0.3),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(isPaid ? Icons.check_circle : Icons.pending, size: 14, color: isPaid ? Colors.green : Colors.orange),
+            Icon(
+              isPaid ? Icons.check_circle : Icons.pending,
+              size: 14,
+              color: isPaid ? Colors.green : Colors.orange,
+            ),
             const SizedBox(width: 4),
             Flexible(
               child: Text(
@@ -571,20 +743,32 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     );
   }
 
-  Widget _buildInstallmentRow(String voucherId, int index, Map<String, dynamic> inst, bool isUrdu) {
+  Widget _buildInstallmentRow(
+    String voucherId,
+    int index,
+    Map<String, dynamic> inst,
+    bool isUrdu,
+  ) {
     bool isPaid = inst['status'] == 'paid';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50.withOpacity(0.5),
+        color: Colors.grey.shade50.withValues(alpha: 0.5),
         border: Border(top: BorderSide(color: Colors.grey.shade100)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
-            child: Icon(Icons.pie_chart_outline, size: 20, color: Colors.blue.shade300),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.pie_chart_outline,
+              size: 20,
+              color: Colors.blue.shade300,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -593,7 +777,10 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               children: [
                 Text(
                   Translations.get(inst['label'] ?? 'Installment', isUrdu),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
                 Text(
                   '${inst['amount']} PKR',
@@ -602,7 +789,12 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               ],
             ),
           ),
-          _buildProofAndStatus(inst['voucherImageUrl'] ?? inst['paymentProofUrl'], inst['status'], isUrdu, () => _toggleInstallmentStatus(voucherId, index, inst['status'])),
+          _buildProofAndStatus(
+            inst['voucherImageUrl'] ?? inst['paymentProofUrl'],
+            inst['status'],
+            isUrdu,
+            () => _toggleInstallmentStatus(voucherId, index, inst['status']),
+          ),
         ],
       ),
     );
@@ -618,11 +810,19 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         newStatus: newStatus,
       );
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
-  void _toggleInstallmentStatus(String voucherId, int index, String currentStatus) async {
+  void _toggleInstallmentStatus(
+    String voucherId,
+    int index,
+    String currentStatus,
+  ) async {
     String newStatus = currentStatus == 'paid' ? 'unpaid' : 'paid';
     try {
       await _firebaseService.adminUpdateVoucherStatus(
@@ -633,7 +833,11 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         installmentIndex: index,
       );
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
@@ -652,7 +856,11 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: Color(0xFF991B1B), fontSize: 13, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                color: Color(0xFF991B1B),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -660,7 +868,13 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     );
   }
 
-  Widget _buildInfoField(String label, TextEditingController controller, IconData icon, bool isUrdu, {String? hint}) {
+  Widget _buildInfoField(
+    String label,
+    TextEditingController controller,
+    IconData icon,
+    bool isUrdu, {
+    String? hint,
+  }) {
     return TextField(
       controller: controller,
       enabled: _isEditingProfile,
@@ -679,22 +893,33 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
       children: [
         Text(
           Translations.get('Parent Status', isUrdu),
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54),
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
         ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _isEditingProfile ? Colors.grey : Colors.grey.shade200),
+            border: Border.all(
+              color: _isEditingProfile ? Colors.grey : Colors.grey.shade200,
+            ),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _selectedParentStatus,
               isExpanded: true,
               dropdownColor: Colors.white,
-              onChanged: _isEditingProfile ? (val) => setState(() => _selectedParentStatus = val!) : null,
-              items: ['Standard', 'Priority'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+              onChanged: _isEditingProfile
+                  ? (val) => setState(() => _selectedParentStatus = val!)
+                  : null,
+              items: [
+                'Standard',
+                'Priority',
+              ].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
             ),
           ),
         ),
@@ -702,12 +927,19 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 8, left: 4),
             child: Text(
-              Translations.get('Priority parents will be reminded twice in a week.', isUrdu),
-              style: TextStyle(fontSize: 12, color: Colors.blue.shade700, fontWeight: FontWeight.w500),
+              Translations.get(
+                'Priority parents will be reminded twice in a week.',
+                isUrdu,
+              ),
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.blue.shade700,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         const SizedBox(height: 20),
-        
+
         // SMS Alert Toggle
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
@@ -724,13 +956,17 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: _smsAlertsEnabled ? const Color(0xFF2168F8).withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                      color: _smsAlertsEnabled
+                          ? const Color(0xFF2168F8).withValues(alpha: 0.1)
+                          : Colors.grey.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.sms_outlined,
                       size: 20,
-                      color: _smsAlertsEnabled ? const Color(0xFF2168F8) : Colors.grey,
+                      color: _smsAlertsEnabled
+                          ? const Color(0xFF2168F8)
+                          : Colors.grey,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -746,13 +982,16 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                         ),
                       ),
                       Text(
-                        _smsAlertsEnabled 
-                          ? Translations.get('SMS prioritized over Email', isUrdu)
-                          : Translations.get('Email Alert active by default', isUrdu),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey[500],
-                        ),
+                        _smsAlertsEnabled
+                            ? Translations.get(
+                                'SMS prioritized over Email',
+                                isUrdu,
+                              )
+                            : Translations.get(
+                                'Email Alert active by default',
+                                isUrdu,
+                              ),
+                        style: TextStyle(fontSize: 11, color: Colors.grey[500]),
                       ),
                     ],
                   ),
@@ -760,7 +999,9 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               ),
               Switch(
                 value: _smsAlertsEnabled,
-                onChanged: _isEditingProfile ? (val) => setState(() => _smsAlertsEnabled = val) : null,
+                onChanged: _isEditingProfile
+                    ? (val) => setState(() => _smsAlertsEnabled = val)
+                    : null,
                 activeThumbColor: const Color(0xFF2168F8),
               ),
             ],
@@ -780,16 +1021,22 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           obscureText: _obscurePassword,
           decoration: InputDecoration(
             labelText: Translations.get('Parent Password', isUrdu),
-            prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF2168F8)),
+            prefixIcon: const Icon(
+              Icons.lock_outline,
+              color: Color(0xFF2168F8),
+            ),
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   icon: Icon(
-                    _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    _obscurePassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
                     color: Colors.black54,
                   ),
-                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
                 ),
                 if (_isEditingProfile)
                   IconButton(
@@ -797,7 +1044,8 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                     onPressed: () {
                       _showRegenerateConfirmDialog(context, isUrdu, () {
                         setState(() {
-                          _parentPasswordController.text = _firebaseService.generatePassword();
+                          _parentPasswordController.text = _firebaseService
+                              .generatePassword();
                         });
                       });
                     },
@@ -811,14 +1059,26 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     );
   }
 
-  void _showRegenerateConfirmDialog(BuildContext context, bool isUrdu, VoidCallback onConfirm) {
+  void _showRegenerateConfirmDialog(
+    BuildContext context,
+    bool isUrdu,
+    VoidCallback onConfirm,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(Translations.get('Reset Password?', isUrdu)),
-        content: Text(Translations.get('This will generate a new random password for the parent. You must save changes to apply it.', isUrdu)),
+        content: Text(
+          Translations.get(
+            'This will generate a new random password for the parent. You must save changes to apply it.',
+            isUrdu,
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(Translations.get('Cancel', isUrdu))),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(Translations.get('Cancel', isUrdu)),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
